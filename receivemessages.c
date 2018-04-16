@@ -5,12 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #define MSGSIZE 65
 
 char *fifo = "/tmp/myfifo";
 
-main(int argc, char *argv[]){
+int main(int argc, char *argv[]){
 	int fd, i, nwrite;
 	char msgbuf[MSGSIZE+1];
 
