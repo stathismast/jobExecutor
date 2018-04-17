@@ -10,13 +10,13 @@
 #include <unistd.h>
 #define MSGSIZE 65
 
-char *fifo = "/tmp/myfifo";
+char *fifo = "/tmp/blabla";
 
 int main(int argc, char *argv[]){
 	int fd, i, nwrite;
 	char msgbuf[MSGSIZE+1];
 
-	int pid;
+	pid_t pid;
 
 	if (argc<2) { printf("Usage: sendamessage ... \n"); exit(1); }
 
@@ -27,13 +27,17 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-	if (pid = fork() == 0){
-		char * buff[2];
-		printf("This is the child\n");
+	pid = fork();
+	if (pid == 0){
+		char * buff[3];
 		buff[0] = (char*) malloc(12);
 		strcpy(buff[0],"./recv");
-		buff[1];
-		execvp("./recv", buff);
+		buff[1] = (char*) malloc(12);
+		strcpy(buff[1],fifo);
+		buff[2] = NULL;
+		int retval = execvp("./recv", buff);
+		printf("Execvp failed, return value is %d\n", retval);
+		perror("exevp"); exit(1);
 	}
 	else{
 
@@ -44,7 +48,7 @@ int main(int argc, char *argv[]){
 
 		for (i=1; i<argc; i++){
 			if (strlen(argv[i]) > MSGSIZE){
-				printf("Message with Prefix %.*s Too long - Ignored\n",10,argv[i]); 
+				printf("Message with Prefix %.*s Too long - Ignored\n",10,argv[i]);
 				fflush(stdout);
 				continue;
 				}
@@ -52,10 +56,10 @@ int main(int argc, char *argv[]){
 			if ((nwrite=write(fd, msgbuf, MSGSIZE+1)) == -1)
 				{ perror("Error in Writing"); exit(2); }
 
-			}
+		}
 
-		printf("PID is %d \n", (int) pid);
+		sleep(1);
+		kill(pid,9);	//kill child
 		exit(0);
 	}
 }
-

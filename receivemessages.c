@@ -9,24 +9,23 @@
 
 #define MSGSIZE 65
 
-char *fifo = "/tmp/myfifo";
-
 int main(int argc, char *argv[]){
 	int fd, i, nwrite;
 	char msgbuf[MSGSIZE+1];
 
+	char * fifo = malloc(strlen(argv[1])+1);
+	strcpy(fifo,argv[1]);
+
 	if (argc>2) { printf("Usage: receivemessage & \n"); exit(1); }
 	if ( (fd=open(fifo, O_RDWR)) < 0){
-		perror("receiver: fifo open problem"); exit(3);	
+		perror("receiver: fifo open problem"); exit(3);
 		}
-	printf("Waiting for message\n");
 	for (;;){
 		if ( read(fd, msgbuf, MSGSIZE+1) < 0) {
 			perror("problem in reading"); exit(5);
 			}
 		fflush(stdout);
-		printf("\nMessage Received: %s\n", msgbuf);
+		printf("Message Received: %s\n", msgbuf);
 		fflush(stdout);
 		}
 }
-
