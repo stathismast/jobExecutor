@@ -8,58 +8,45 @@
 #include <error.h>
 #include <errno.h>
 #include <unistd.h>
-#define MSGSIZE 65
+#define MSGSIZE 512
 
-char *fifo = "/tmp/blabla";
+char *fifo = "/tmp/myfifo";
 
 int main(int argc, char *argv[]){
-	int fd, i, nwrite;
+	int fd, i;
 	char msgbuf[MSGSIZE+1];
 
 	pid_t pid;
 
-	if (argc<2) { printf("Usage: sendamessage ... \n"); exit(1); }
-
-	if ( mkfifo(fifo, 0666) == -1 ){
-		if ( errno!=EEXIST ){
+	if(mkfifo(fifo, 0666) == -1)
+		if(errno!=EEXIST){
 			perror("sender: mkfifo");
 			exit(6);
 		}
-	}
 
 	pid = fork();
-	if (pid == 0){
+
+	if(pid == 0){
 		char * buff[3];
 		buff[0] = (char*) malloc(12);
 		strcpy(buff[0],"./recv");
 		buff[1] = (char*) malloc(12);
 		strcpy(buff[1],fifo);
 		buff[2] = NULL;
-		int retval = execvp("./recv", buff);
-		printf("Execvp failed, return value is %d\n", retval);
-		perror("exevp"); exit(1);
+		execvp("./recv", buff);
 	}
 	else{
-
-		sleep(1);
-
-		if ( (fd=open(fifo, O_WRONLY| O_NONBLOCK)) < 0)
-			{ perror("sender: fifo open error"); exit(1); }
-
-		for (i=1; i<argc; i++){
-			if (strlen(argv[i]) > MSGSIZE){
-				printf("Message with Prefix %.*s Too long - Ignored\n",10,argv[i]);
-				fflush(stdout);
-				continue;
-				}
-			strcpy(msgbuf, argv[i]);
-			if ((nwrite=write(fd, msgbuf, MSGSIZE+1)) == -1)
-				{ perror("Error in Writing"); exit(2); }
-
+		fd=open(fifo, O_WRONLY);
+		strcpy(msgbuf, "it doesnt really matter what i write yeah?");
+		if(write(fd, msgbuf, MSGSIZE+1) == -1){
+			perror("Error in Writing"); exit(2);
 		}
-
-		sleep(1);
-		kill(pid,9);	//kill child
-		exit(0);
 	}
+
+	strcpy(msgbuf, "/exit");	//send exit command to child
+	if(write(fd, msgbuf, MSGSIZE+1) == -1){
+		perror("Error in Writing"); exit(2);
+	}
+	exit(0);
+
 }

@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#define MSGSIZE 65
+#define MSGSIZE 512
 
 int main(int argc, char *argv[]){
 	int fd, i, nwrite;
@@ -24,8 +24,7 @@ int main(int argc, char *argv[]){
 		if ( read(fd, msgbuf, MSGSIZE+1) < 0) {
 			perror("problem in reading"); exit(5);
 			}
-		fflush(stdout);
-		printf("Message Received: %s\n", msgbuf);
-		fflush(stdout);
+		printf("Message Received: -%s-\n", msgbuf);
+		if(strcmp(msgbuf,"/exit") == 0) return 0;
 		}
 }
