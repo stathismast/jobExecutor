@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
 
 		if(strcmp(msgbuf,"/exit") == 0) return 0;
 
-		strcpy(msgbuf, "I am your child");
+		sprintf(msgbuf, "I am your #%s child", argv[3]);
 		if(write(fdB, msgbuf, MSGSIZE+1) == -1){
 			perror("receiver: error in writing"); exit(2);
 		}

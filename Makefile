@@ -1,3 +1,5 @@
+workers = 4
+
 all:
 	gcc -g -o recv receivemessages.c; gcc -o send sendmessages.c -lm
 
@@ -8,23 +10,25 @@ clean:
 	rm -f recv send; rm -f /tmp/in* /tmp/out*
 
 run:
-	@echo "Cleaning up..."
-	@rm -f recv send; rm -f /tmp/in* /tmp/out*;
 	@echo "Compiling..."
 	@gcc -g -o recv receivemessages.c; gcc -o send sendmessages.c -lm;
 	@echo -----------------------------------------------------------------;
-	@./send;
+	@./send $(workers);
 	@echo -----------------------------------------------------------------;
 	@ls -lF /tmp | grep inPipe*;
 	@ls -lF /tmp | grep outPipe*;
+	@echo "Cleaning up..."
+	@rm -f recv send; rm -f /tmp/in* /tmp/out*;
+	@echo "Pipes removed."
 
 valgrind:
-	@echo "Cleaning up..."
-	@rm -f recv send; rm -f /tmp/in* /tmp/out*;
 	@echo "Compiling..."
 	@gcc -g -o recv receivemessages.c; gcc -o send sendmessages.c -lm;
 	@echo -----------------------------------------------------------------;
-	@valgrind ./send;
+	@valgrind ./send $(workers);
 	@echo -----------------------------------------------------------------;
 	@ls -lF /tmp | grep inPipe*;
 	@ls -lF /tmp | grep outPipe*;
+	@echo "Cleaning up..."
+	@rm -f recv send; rm -f /tmp/in* /tmp/out*;
+	@echo "Pipes removed."
