@@ -13,6 +13,12 @@
 
 pid_t * childPIDs;
 int numberOfWorkers;
+int * out;
+int * in;
+char ** outPipes;					//Output named pipes
+char ** inPipes;					//Input named pipes
+
+int * responses;
 
 int openForReading(char * name){
 	return open(name, O_RDONLY);
@@ -107,14 +113,32 @@ void sigChild(int signum){
 	}
 }
 
+void sigCheckPipe(int signum){
+	signal(SIGUSR1,sigCheckPipe);
+
+	char msgbuf[MSGSIZE+1];
+	for(int i=0; i<numberOfWorkers; i++){
+		close(in[i]);
+		in[i] = open(inPipes[i], O_RDONLY | O_NONBLOCK);
+		if(read(in[i], msgbuf, MSGSIZE+1) > 0){
+			printf("Message from child #%d: -%s-\n",i,msgbuf);
+			if(strcmp(msgbuf,"yeah") == 0) responses[i] = 1;
+		}
+		close(in[i]);
+		in[i] = open(inPipes[i], O_RDONLY);
+	}
+}
+
 int main(int argc, char *argv[]){
 	signal(SIGCHLD,sigChild);
+	signal(SIGUSR1,sigCheckPipe);
 
 	int w = atoi(argv[1]);				//Number of workers
-	char ** outPipes;					//Output named pipes
-	char ** inPipes;					//Input named pipes
-	int * out = malloc(w*sizeof(int));	//Output named pipe file descriptors
-	int * in = malloc(w*sizeof(int));	//Input named pipe file descriptors
+	out = malloc(w*sizeof(int));	//Output named pipe file descriptors
+	in = malloc(w*sizeof(int));	//Input named pipe file descriptors
+
+	responses = malloc(w*sizeof(int));	//Input named pipe file descriptors
+	for(int i=0; i<w; i++) responses[i] = 0;
 
 	char msgbuf[MSGSIZE+1];
 
@@ -143,6 +167,17 @@ int main(int argc, char *argv[]){
 	}
 	printf("All workers up and running.\n");
 
+	for(int i=0; i<w; i++){
+		kill(childPIDs[i],SIGUSR2);
+	}
+
+	int sum = 0;
+	while(sum != w){
+		sum = 0;
+		for(int i=0; i<w; i++){
+			sum += responses[i];
+		}
+	}
 
 	signal(SIGCHLD,SIG_DFL);
 	for(int i=0; i<w; i++)
@@ -151,6 +186,7 @@ int main(int argc, char *argv[]){
 	free(in);
 	free(out);
 	free(childPIDs);
+	free(responses);
 	exit(0);
 
 }

@@ -14,6 +14,8 @@ int fdA;
 int fdB;
 char * id;
 
+int ready;
+
 void sigCheckPipe(int signum){
 	signal(SIGUSR1,sigCheckPipe);
 
@@ -30,8 +32,16 @@ void sigCheckPipe(int signum){
 	}
 }
 
+void sigReady(int signum){
+	signal(SIGUSR2,sigReady);
+
+	ready = 1;
+}
+
 int main(int argc, char *argv[]){
 	signal(SIGUSR1,sigCheckPipe);
+	signal(SIGUSR2,sigReady);
+	ready = 0;
 
 	id = malloc(strlen(argv[3])+1);
 	strcpy(id,argv[3]);
@@ -50,6 +60,18 @@ int main(int argc, char *argv[]){
 	if ( (fdB=open(fifoB, O_WRONLY)) < 0){
 		perror("receiver: fifoB open problem"); exit(3);
 	}
+
+	while(!ready){
+		pause();
+	}
+
+	char msgbuf[MSGSIZE+1];
+	strcpy(msgbuf,"yeah");
+	if(write(fdB, msgbuf, MSGSIZE+1) == -1){
+		perror("receiver: error in writing"); exit(2);
+	}
+	kill(getppid(),SIGUSR1);
+
 	for (;;){
 		pause();
 	}
