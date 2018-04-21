@@ -25,7 +25,7 @@ valgrind:
 	@echo "Compiling..."
 	@gcc -g -o recv receivemessages.c; gcc -o send sendmessages.c -lm;
 	@echo -----------------------------------------------------------------;
-	@valgrind ./send $(workers);
+	@valgrind --leak-check=full --show-leak-kinds=all ./send $(workers);
 	@echo -----------------------------------------------------------------;
 	@ls -lF /tmp | grep inPipe*;
 	@ls -lF /tmp | grep outPipe*;

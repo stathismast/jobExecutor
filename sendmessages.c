@@ -11,6 +11,9 @@
 #include <math.h>
 #define MSGSIZE 512
 
+pid_t * childPIDs;
+int numberOfWorkers;
+
 int openForReading(char * name){
 	return open(name, O_RDONLY);
 }
@@ -19,10 +22,11 @@ int openForWriting(char * name){
 	return open(name, O_WRONLY);
 }
 
-void writeInPipe(int fd, char * message){
+void writeToChild(int id, int fd, char * message){
 	if(write(fd, message, MSGSIZE+1) == -1){
 		perror("sender: error in writing:"); exit(2);
 	}
+	kill(childPIDs[id],SIGUSR1);	//signal child to read from pipe
 }
 
 void readFromPipe(int fd, char * message){
@@ -39,6 +43,12 @@ void createNamedPipe(char * pipeName){
 }
 
 void createReceiver(char * pipeToReceiver, char * pipeFromReceiver, int id){
+	pid_t pid = fork();
+	if(pid != 0){
+		childPIDs[id] = pid;	//Store child pid in global array
+		printf("New child created with pid: %d\n",(int)pid);
+		return;
+	}
 	char * buff[5];
 	buff[0] = (char*) malloc(20);
 	strcpy(buff[0],"./recv");
@@ -54,18 +64,22 @@ void createReceiver(char * pipeToReceiver, char * pipeFromReceiver, int id){
 	execvp("./recv", buff);
 }
 
+void getName(int id, char ** outPipes, char ** inPipes){
+	*outPipes = malloc(64);
+	*inPipes = malloc(64);
+	strcpy(*outPipes,"/tmp/outPipe");
+	strcpy(*inPipes,"/tmp/inPipe");
+	char num[10] = {0};
+	sprintf(num, "%d", id+1);
+	strcat(*outPipes,num);
+	strcat(*inPipes,num);
+}
+
 void getPipeNames(int pipeCount, char *** outPipes, char *** inPipes){
 	*outPipes = malloc(pipeCount*sizeof(char*));
 	*inPipes = malloc(pipeCount*sizeof(char*));
 	for(int i=0; i<pipeCount; i++){
-		(*outPipes)[i] = malloc(64);
-		(*inPipes)[i] = malloc(64);
-		strcpy((*outPipes)[i],"/tmp/outPipe");
-		strcpy((*inPipes)[i],"/tmp/inPipe");
-		char num[10] = {0};
-		sprintf(num, "%d", i+1);
-		strcat((*outPipes)[i],num);
-		strcat((*inPipes)[i],num);
+		getName(i,&(*outPipes)[i],&(*inPipes)[i]);
 	}
 }
 
@@ -78,14 +92,34 @@ void freePipeNames(int pipeCount, char ** outPipes, char ** inPipes){
 	free(inPipes);
 }
 
+void sigChild(int signum){
+	signal(SIGCHLD,sigChild);
+	for(int i=0; i<numberOfWorkers; i++){
+		if(kill(childPIDs[i],0) != 0){
+			printf("#%d child terminated\n",i);
+			char * outPipeName;
+			char * inPipeName;
+			getName(i,&outPipeName,&inPipeName);
+			createReceiver(outPipeName,inPipeName,i);
+			free(outPipeName);
+			free(inPipeName);
+		}
+	}
+}
+
 int main(int argc, char *argv[]){
-	int w = atoi(argv[1]);							//Number of workers
+	signal(SIGCHLD,sigChild);
+
+	int w = atoi(argv[1]);				//Number of workers
 	char ** outPipes;					//Output named pipes
 	char ** inPipes;					//Input named pipes
 	int * out = malloc(w*sizeof(int));	//Output named pipe file descriptors
 	int * in = malloc(w*sizeof(int));	//Input named pipe file descriptors
 
 	char msgbuf[MSGSIZE+1];
+
+	childPIDs = malloc(w*sizeof(pid_t));
+	numberOfWorkers = w;
 
 	getPipeNames(w,&outPipes,&inPipes);
 
@@ -94,24 +128,29 @@ int main(int argc, char *argv[]){
 		createNamedPipe(inPipes[i]);
 	}
 
-	for(int i=0; i<w; i++){
-		if(fork() == 0)
-			createReceiver(outPipes[i],inPipes[i],i);
-	}
+	for(int i=0; i<w; i++)
+		createReceiver(outPipes[i],inPipes[i],i);
 
 	for(int i=0; i<w; i++){
 		out[i]=openForWriting(outPipes[i]);
 		in[i]=openForReading(inPipes[i]);
-		writeInPipe(out[i],"message one");
+		writeToChild(i,out[i],"/test");
 		readFromPipe(in[i],msgbuf);
-		printf("Child responded: -%s-\n", msgbuf);
+		if(strcmp(msgbuf,"/test") != 0){
+			printf("Communication error with worker #%d.\n",i);
+			exit(2);
+		}
 	}
+	printf("All workers up and running.\n");
 
+
+	signal(SIGCHLD,SIG_DFL);
 	for(int i=0; i<w; i++)
-		writeInPipe(out[i],"/exit");
+		if(kill(childPIDs[i],0) == 0) writeToChild(i,out[i],"/exit");
 	freePipeNames(w,outPipes,inPipes);
 	free(in);
 	free(out);
+	free(childPIDs);
 	exit(0);
 
 }
