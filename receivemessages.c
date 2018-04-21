@@ -61,16 +61,19 @@ int main(int argc, char *argv[]){
 		perror("receiver: fifoB open problem"); exit(3);
 	}
 
+	//Pause until we get a signal from parent that we are ready to go
+	//As if we are promted to run a /search command for example
 	while(!ready){
 		pause();
 	}
 
+	//Send out response to the parent
 	char msgbuf[MSGSIZE+1];
 	strcpy(msgbuf,"yeah");
 	if(write(fdB, msgbuf, MSGSIZE+1) == -1){
 		perror("receiver: error in writing"); exit(2);
 	}
-	kill(getppid(),SIGUSR1);
+	kill(getppid(),SIGUSR1);	//Inform the parent that we responded
 
 	for (;;){
 		pause();

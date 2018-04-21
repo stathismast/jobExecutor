@@ -113,18 +113,23 @@ void sigChild(int signum){
 	}
 }
 
+//Check every pipe
 void sigCheckPipe(int signum){
 	signal(SIGUSR1,sigCheckPipe);
 
 	char msgbuf[MSGSIZE+1];
 	for(int i=0; i<numberOfWorkers; i++){
 		close(in[i]);
+		//Reopen the pipe with non blocking argument
 		in[i] = open(inPipes[i], O_RDONLY | O_NONBLOCK);
 		if(read(in[i], msgbuf, MSGSIZE+1) > 0){
 			printf("Message from child #%d: -%s-\n",i,msgbuf);
 			if(strcmp(msgbuf,"yeah") == 0) responses[i] = 1;
 		}
 		close(in[i]);
+		//Reopen the pipe with blocking functionallity
+		//This might be reduntant at this point seeing as we might only need
+		//non blocking Communication from now on
 		in[i] = open(inPipes[i], O_RDONLY);
 	}
 }
@@ -167,10 +172,13 @@ int main(int argc, char *argv[]){
 	}
 	printf("All workers up and running.\n");
 
+	//Inform children that they are ready to go
+	//Equivilent of promting them to execute a command such as /search
 	for(int i=0; i<w; i++){
 		kill(childPIDs[i],SIGUSR2);
 	}
 
+	//Whild there is a child that hasnt sent a response
 	int sum = 0;
 	while(sum != w){
 		sum = 0;
