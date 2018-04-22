@@ -1,7 +1,7 @@
 workers = 4
 
 all:
-	gcc -g -o recv receivemessages.c; gcc -o send sendmessages.c -lm
+	gcc -g -o recv receivemessages.c; gcc -g -o send sendmessages.c pipes.c -lm
 
 fifo:
 	rm -f /tmp/*
@@ -11,7 +11,7 @@ clean:
 
 run:
 	@echo "Compiling..."
-	@gcc -g -o recv receivemessages.c; gcc -o send sendmessages.c -lm;
+	@gcc -g -o recv receivemessages.c; gcc -g -o send sendmessages.c pipes.c -lm
 	@echo -----------------------------------------------------------------;
 	@./send $(workers);
 	@echo -----------------------------------------------------------------;
@@ -23,7 +23,7 @@ run:
 
 valgrind:
 	@echo "Compiling..."
-	@gcc -g -o recv receivemessages.c; gcc -o send sendmessages.c -lm;
+	@gcc -g -o recv receivemessages.c; gcc -g -o send sendmessages.c pipes.c -lm
 	@echo -----------------------------------------------------------------;
 	@valgrind --leak-check=full --show-leak-kinds=all ./send $(workers);
 	@echo -----------------------------------------------------------------;
