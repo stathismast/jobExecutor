@@ -31,8 +31,8 @@ void readFromPipe(int fd, char * message){
 }
 
 void createNamedPipe(char * pipeName){
-	unlink(pipeName);	//Delete named pipe if it already exists
-	if(mkfifo(pipeName, 0666) == -1){
+	unlink(pipeName);		//Delete named pipe if it already exists
+	if(mkfifo(pipeName, 0600) == -1){
 		perror("sender: mkfifo");
 		exit(6);
 	}
@@ -70,7 +70,7 @@ void reCreateReceiver(int id){
 		out[id] = openForWriting(outPipes[id]);
 		in[id] = openForReading(inPipes[id]);
 		writeToChild(id,out[id],"/test");
-		char msgbuf[MSGSIZE+1];
+		char msgbuf[MSGSIZE+1] = {0};
 		readFromPipe(in[id],msgbuf);
 		if(strcmp(msgbuf,"/test") != 0){
 			printf("Communication error with worker #%d.\n",id);
