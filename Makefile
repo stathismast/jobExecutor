@@ -15,8 +15,6 @@ run:
 	@echo -----------------------------------------------------------------;
 	@./send $(workers);
 	@echo -----------------------------------------------------------------;
-	@ls -lF /tmp | grep inPipe*;
-	@ls -lF /tmp | grep outPipe*;
 	@echo "Cleaning up..."
 	@rm -f recv send; rm -f /tmp/in* /tmp/out*;
 	@echo "Pipes removed."

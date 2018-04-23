@@ -18,7 +18,10 @@ void writeToChild(int id, int fd, char * message){
 	if(write(fd, message, MSGSIZE+1) == -1){
 		perror("sender: error in writing:"); exit(2);
 	}
-	kill(childPIDs[id],SIGUSR1);	//signal child to read from pipe
+
+		// printf("About to signal child with pid: %d\n",childPIDs[id]);
+	int retval = kill(childPIDs[id],SIGUSR1);	//signal child to read from pipe
+			// printf("Signal retval was: %d\n",retval);
 }
 
 void readFromPipe(int fd, char * message){
@@ -28,13 +31,14 @@ void readFromPipe(int fd, char * message){
 }
 
 void createNamedPipe(char * pipeName){
-	if(mkfifo(pipeName, 0666) == -1 && errno!=EEXIST){
+	unlink(pipeName);	//Delete named pipe if it already exists
+	if(mkfifo(pipeName, 0666) == -1){
 		perror("sender: mkfifo");
 		exit(6);
 	}
 }
 
-void createReceiver(char * pipeToReceiver, char * pipeFromReceiver, int id){
+void createReceiver(int id){
 	pid_t pid = fork();
 	if(pid != 0){
 		childPIDs[id] = pid;	//Store child pid in global array
@@ -44,10 +48,43 @@ void createReceiver(char * pipeToReceiver, char * pipeFromReceiver, int id){
 	char * buff[5];
 	buff[0] = (char*) malloc(20);
 	strcpy(buff[0],"./recv");
-	buff[1] = (char*) malloc(strlen(pipeToReceiver)+1);
-	strcpy(buff[1],pipeToReceiver);
-	buff[2] = (char*) malloc(strlen(pipeFromReceiver)+1);
-	strcpy(buff[2],pipeFromReceiver);
+	buff[1] = (char*) malloc(strlen(outPipes[id])+1);
+	strcpy(buff[1],outPipes[id]);
+	buff[2] = (char*) malloc(strlen(inPipes[id])+1);
+	strcpy(buff[2],inPipes[id]);
+	char workerID[10] = {0};
+	sprintf(workerID, "%d", id);
+	buff[3] = (char*) malloc(strlen(workerID)+1);
+	strcpy(buff[3],workerID);
+	buff[4] = NULL;
+	execvp("./recv", buff);
+}
+
+void reCreateReceiver(int id){
+	pid_t pid = fork();
+	if(pid != 0){
+		childPIDs[id] = pid;	//Store child pid in global array
+		printf("New child created with pid: %d\n",(int)pid);
+		createNamedPipe(outPipes[id]);
+		createNamedPipe(inPipes[id]);
+		out[id] = openForWriting(outPipes[id]);
+		in[id] = openForReading(inPipes[id]);
+		writeToChild(id,out[id],"/test");
+		char msgbuf[MSGSIZE+1];
+		readFromPipe(in[id],msgbuf);
+		if(strcmp(msgbuf,"/test") != 0){
+			printf("Communication error with worker #%d.\n",id);
+			exit(2);
+		}
+		return;
+	}
+	char * buff[5];
+	buff[0] = (char*) malloc(20);
+	strcpy(buff[0],"./recv");
+	buff[1] = (char*) malloc(strlen(outPipes[id])+1);
+	strcpy(buff[1],outPipes[id]);
+	buff[2] = (char*) malloc(strlen(inPipes[id])+1);
+	strcpy(buff[2],inPipes[id]);
 	char workerID[10] = {0};
 	sprintf(workerID, "%d", id);
 	buff[3] = (char*) malloc(strlen(workerID)+1);

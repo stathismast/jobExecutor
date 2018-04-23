@@ -23,7 +23,7 @@ void sigCheckPipe(int signum){
 	if ( read(fdA, msgbuf, MSGSIZE+1) < 0) {
 		perror("receiver: problem in reading"); exit(5);
 		}
-	// printf("Message Received: -%s-\n", msgbuf);
+	// printf("%d. Message Received: -%s-\n", atoi(id), msgbuf);
 
 	if(strcmp(msgbuf,"/exit") == 0) exit(0);
 
@@ -34,7 +34,6 @@ void sigCheckPipe(int signum){
 
 void sigReady(int signum){
 	signal(SIGUSR2,sigReady);
-
 	ready = 1;
 }
 
@@ -74,6 +73,8 @@ int main(int argc, char *argv[]){
 		perror("receiver: error in writing"); exit(2);
 	}
 	kill(getppid(),SIGUSR1);	//Inform the parent that we responded
+	ready = 0;
+
 
 	for (;;){
 		pause();

@@ -13,13 +13,8 @@ void sigChild(int signum){
 	signal(SIGCHLD,sigChild);
 	for(int i=0; i<numberOfWorkers; i++){
 		if(kill(childPIDs[i],0) != 0){
-			printf("#%d child terminated\n",i);
-			char * outPipeName;
-			char * inPipeName;
-			getName(i,&outPipeName,&inPipeName);
-			createReceiver(outPipeName,inPipeName,i);
-			free(outPipeName);
-			free(inPipeName);
+			printf("#%d child terminated.\n",i);
+			reCreateReceiver(i);
 		}
 	}
 }
@@ -50,10 +45,10 @@ int main(int argc, char *argv[]){
 	signal(SIGUSR1,sigCheckPipe);
 
 	int w = atoi(argv[1]);				//Number of workers
-	out = malloc(w*sizeof(int));	//Output named pipe file descriptors
-	in = malloc(w*sizeof(int));	//Input named pipe file descriptors
+	out = malloc(w*sizeof(int));		//Output named pipe file descriptors
+	in = malloc(w*sizeof(int));			//Input named pipe file descriptors
 
-	responses = malloc(w*sizeof(int));	//Input named pipe file descriptors
+	responses = malloc(w*sizeof(int));
 	for(int i=0; i<w; i++) responses[i] = 0;
 
 	char msgbuf[MSGSIZE+1];
@@ -69,11 +64,12 @@ int main(int argc, char *argv[]){
 	}
 
 	for(int i=0; i<w; i++)
-		createReceiver(outPipes[i],inPipes[i],i);
+		createReceiver(i);
 
 	for(int i=0; i<w; i++){
 		out[i]=openForWriting(outPipes[i]);
 		in[i]=openForReading(inPipes[i]);
+		usleep(10000);
 		writeToChild(i,out[i],"/test");
 		readFromPipe(in[i],msgbuf);
 		if(strcmp(msgbuf,"/test") != 0){
@@ -101,6 +97,10 @@ int main(int argc, char *argv[]){
 	signal(SIGCHLD,SIG_DFL);
 	for(int i=0; i<w; i++)
 		if(kill(childPIDs[i],0) == 0) writeToChild(i,out[i],"/exit");
+	for(int i=0; i<w; i++)
+		unlink(outPipes[i]);
+	for(int i=0; i<w; i++)
+		unlink(inPipes[i]);
 	freePipeNames(w,outPipes,inPipes);
 	free(in);
 	free(out);
