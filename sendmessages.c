@@ -1,4 +1,4 @@
-#include "pipes.h"
+#include "ioManager.h"
 
 pid_t * childPIDs;
 int numberOfWorkers;
@@ -44,7 +44,11 @@ int main(int argc, char *argv[]){
 	signal(SIGCHLD,sigChild);
 	signal(SIGUSR1,sigCheckPipe);
 
-	int w = atoi(argv[1]);				//Number of workers
+	char * docfile;
+	int w;
+
+	if(manageArguments(argc,argv,&docfile,&w) < 0) exit(3);
+
 	out = malloc(w*sizeof(int));		//Output named pipe file descriptors
 	in = malloc(w*sizeof(int));			//Input named pipe file descriptors
 
