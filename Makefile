@@ -1,8 +1,8 @@
 workersSource = 4
 
 all:
-	gcc -g -o worker workersSrc/worker.c;
-	gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c -lm
+	gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
+	gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 
 fifo:
 	rm -f /tmp/*
@@ -12,8 +12,8 @@ clean:
 
 run:
 	@echo "Compiling..."
-	@gcc -g -o worker workersSrc/worker.c;
-	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c -lm
+	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
+	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
 	@./jobExecutor -w $(workersSource) -d docfile.txt;
 	@echo -----------------------------------------------------------------;
@@ -23,8 +23,8 @@ run:
 
 valgrind:
 	@echo "Compiling..."
-	@gcc -g -o worker workersSrc/worker.c;
-	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c -lm
+	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
+	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
 	@valgrind --leak-check=full --trace-children=yes ./jobExecutor -w $(workersSource) -d docfile.txt;
 	@echo -----------------------------------------------------------------;
@@ -34,10 +34,10 @@ valgrind:
 
 verbose:
 	@echo "Compiling..."
-	@gcc -g -o worker workersSrc/worker.c;
-	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c -lm
+	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
+	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
-	@valgrind --leak-check=full --show-leak-kinds=all --trace-children=yes --track-origins=yes -v ./jobExecutor -w $(workersSource) -d docfile.txt;
+	@valgrind --leak-check=full --track-origins=yes ./jobExecutor -w $(workersSource) -d docfile.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;

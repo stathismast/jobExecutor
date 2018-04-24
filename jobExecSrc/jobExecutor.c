@@ -1,8 +1,8 @@
-#include "ioManager.h"
+#include "signalHandler.h"
 #include <time.h>
 
 pid_t * childPIDs;
-int numberOfWorkers;
+int w;
 int * out;
 int * in;
 char ** outPipes;					//Output named pipes
@@ -10,69 +10,19 @@ char ** inPipes;					//Input named pipes
 
 int * responses;
 
-void sigChild(int signum){
-	for(int i=0; i<numberOfWorkers; i++){
-		if(kill(childPIDs[i],0) != 0){
-			printf("#%d child terminated.\n",i);
-			reCreateReceiver(i);
-		}
-	}
-}
-
-//Check every pipe
-void sigCheckPipe(int signum){
-	char msgbuf[MSGSIZE+1] = {0};
-	for(int i=0; i<numberOfWorkers; i++){
-		if(read(in[i], msgbuf, MSGSIZE+1) > 0){
-			printf("Message from child #%d: -%s-\n",i,msgbuf);
-			if(strcmp(msgbuf,"yeah") == 0) responses[i] = 1;
-		}
-	}
-}
-
-void setupSigActions(){
-	struct sigaction sigchld;
-	sigchld.sa_handler = sigChild;
-	sigemptyset (&sigchld.sa_mask);
-	sigchld.sa_flags = 0;
-	sigaction(SIGCHLD,&sigchld,NULL);
-	struct sigaction sigusr1;
-	sigusr1.sa_handler = sigCheckPipe;
-	sigemptyset(&sigusr1.sa_mask);
-	sigusr1.sa_flags = 0;
-	sigaction(SIGUSR1,&sigusr1,NULL);
-}
-
-int main(int argc, char *argv[]){
-
-	setupSigActions();
-
-	char * docfile;
-	int w;
-
-	if(manageArguments(argc,argv,&docfile,&w) < 0) exit(3);
+void allocateSpace(){
+	responses = malloc(w*sizeof(int));
+	for(int i=0; i<w; i++) responses[i] = 0;
 
 	out = malloc(w*sizeof(int));		//Output named pipe file descriptors
 	in = malloc(w*sizeof(int));			//Input named pipe file descriptors
 
-	responses = malloc(w*sizeof(int));
-	for(int i=0; i<w; i++) responses[i] = 0;
-
-	char msgbuf[MSGSIZE+1] = {0};
-
 	childPIDs = malloc(w*sizeof(pid_t));
-	numberOfWorkers = w;
+}
 
-	getPipeNames(w,&outPipes,&inPipes);
-
-	for(int i=0; i<w; i++){
-		createNamedPipe(outPipes[i]);
-		createNamedPipe(inPipes[i]);
-	}
-
-	for(int i=0; i<w; i++)
-		createReceiver(i);
-
+//This functions opens and tests both input and output pipes for every worker
+int openAndTestPipes(){
+	char msgbuf[MSGSIZE+1] = {0};	//Buffer to be used with named pipes
 	for(int i=0; i<w; i++){
 		out[i]=openForWriting(outPipes[i]);
 		in[i]=openForReading(inPipes[i]);
@@ -81,7 +31,7 @@ int main(int argc, char *argv[]){
 		readFromPipe(in[i],msgbuf);
 		if(strcmp(msgbuf,"/test") != 0){
 			printf("Communication error with worker #%d.\n",i);
-			exit(2);
+			return 0;
 		}
 	}
 	for(int i=0; i<w; i++){
@@ -90,6 +40,34 @@ int main(int argc, char *argv[]){
 		in[i] = open(inPipes[i], O_RDONLY | O_NONBLOCK);
 	}
 	printf("All workers up and running.\n");
+	return 1;
+}
+
+int main(int argc, char *argv[]){
+	setupSigActions();
+
+	char * docfile;
+
+	//Read and check arguments for validity
+	if(manageArguments(argc,argv,&docfile,&w) < 0) exit(3);
+
+	//Allocate space for pipe file descriptors, pipe names, array to keep
+	//PIDs of workers etc.
+	allocateSpace();
+
+	//Create all the necessary named pipes
+	getPipeNames(w,&outPipes,&inPipes);
+	for(int i=0; i<w; i++){
+		createNamedPipe(outPipes[i]);
+		createNamedPipe(inPipes[i]);
+	}
+
+	//Create all the workers
+	for(int i=0; i<w; i++)
+		createReceiver(i);
+
+	if(openAndTestPipes() == 0)
+		exit(2);
 
 	//Inform children that they are ready to go
 	//Equivilent of promting them to execute a command such as /search
