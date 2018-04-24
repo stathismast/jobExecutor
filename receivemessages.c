@@ -10,87 +10,93 @@
 
 #define MSGSIZE 512
 
-int fdA;
-int fdB;
-char * fifoA;
-char * fifoB;
-char id[64] = {0};
+int in;
+int out;
+char * inPipe;
+char * outPipe;
+char * id;
 
-int ready;
+int done;
 
-void sigCheckPipe(int signum){
-	signal(SIGUSR1,sigCheckPipe);
-
-	char msgbuf[MSGSIZE+1] = {0};
-	if ( read(fdA, msgbuf, MSGSIZE+1) < 0) {
+void readFromPipe(char * msgbuf){
+	if(read(in, msgbuf, MSGSIZE+1) < 0){
 		perror("receiver: problem in reading"); exit(5);
-		}
-	printf("%d. Message Received: -%s-\n", atoi(id), msgbuf);
-
-	if(strcmp(msgbuf,"/exit") == 0) {
-		free(fifoA);
-		free(fifoB);
-		exit(0);
 	}
+}
 
-	if(write(fdB, msgbuf, MSGSIZE+1) == -1){
+void writeToPipe(char * msgbuf){
+	if(write(out, msgbuf, MSGSIZE+1) == -1){
 		perror("receiver: error in writing"); exit(2);
 	}
 }
 
-void sigReady(int signum){
-	signal(SIGUSR2,sigReady);
-	ready = 1;
+void sigCheckPipe(int signum){
+	char msgbuf[MSGSIZE+1] = {0};
+
+	readFromPipe(msgbuf);
+	printf("%d. Message Received: -%s-\n", atoi(id), msgbuf);
+
+	if(strcmp(msgbuf,"/test") == 0)
+		writeToPipe(msgbuf);
+
+	if(strcmp(msgbuf,"yeah") == 0){
+		writeToPipe(msgbuf);
+		kill(getppid(),SIGUSR1);	//Inform the parent that we responded
+	}
+}
+
+void sigDone(int signum){
+	done = 1;
+}
+
+void setupSigActions(){
+	struct sigaction sigusr1;
+	sigusr1.sa_handler = sigCheckPipe;
+	sigemptyset(&sigusr1.sa_mask);
+	sigusr1.sa_flags = 0;
+	sigaction(SIGUSR1,&sigusr1,NULL);
+
+	struct sigaction sigusr2;
+	sigusr2.sa_handler = sigDone;
+	sigemptyset (&sigusr2.sa_mask);
+	sigusr2.sa_flags = 0;
+	sigaction(SIGUSR2,&sigusr2,NULL);
+}
+
+void manageArguments(int argc, char *argv[]){
+	inPipe = malloc(strlen(argv[1])+1);
+	strcpy(inPipe,argv[1]);
+	outPipe = malloc(strlen(argv[2])+1);
+	strcpy(outPipe,argv[2]);
+	id = malloc(strlen(argv[3])+1);
+	strcpy(id,argv[3]);
+}
+
+void openPipes(){
+	if((in=open(inPipe, O_RDONLY)) < 0){
+		perror("receiver: inPipe open problem"); exit(3);
+	}
+	if((out=open(outPipe, O_WRONLY)) < 0){
+		perror("receiver: outPipe open problem"); exit(3);
+	}
+	close(out);
+	if((out=open(outPipe, O_WRONLY | O_NONBLOCK)) < 0){
+		perror("receiver: outPipe open problem"); exit(3);
+	}
 }
 
 int main(int argc, char *argv[]){
+	setupSigActions();
+	manageArguments(argc,argv);
+	openPipes();
 
-		// struct sigaction sigusr1;
-		// sigusr1.sa_handler = sigCheckPipe;
-		// sigaction(SIGUSR1,&sigusr1);
-		// struct sigaction sigusr2;
-		// sigusr1.sa_handler = sigReady;
-		// sigaction(SIGUSR2,&sigusr2);
+	done = 0;
 
-
-	signal(SIGUSR1,sigCheckPipe);
-	signal(SIGUSR2,sigReady);
-	ready = 0;
-
-	strcpy(id,argv[3]);
-
-	fifoA = malloc(strlen(argv[1])+1);
-	strcpy(fifoA,argv[1]);
-	fifoB = malloc(strlen(argv[2])+1);
-	strcpy(fifoB,argv[2]);
-
-	if ( (fdA=open(fifoA, O_RDONLY)) < 0){
-		perror("receiver: fifoA open problem"); exit(3);
+	while(!done){
+		pause();
 	}
-	if ( (fdB=open(fifoB, O_WRONLY)) < 0){
-		perror("receiver: fifoB open problem"); exit(3);
-	}
-	close(fdB);
-	if ( (fdB=open(fifoB, O_WRONLY | O_NONBLOCK)) < 0){
-		perror("receiver: fifoB open problem"); exit(3);
-	}
-
-	//Pause until we get a signal from parent that we are ready to go
-	//As if we are promted to run a /search command for example
-	while(!ready){
-		sleep(3);
-	}
-
-	//Send out response to the parent
-	char msgbuf[MSGSIZE+1] = {0};
-	strcpy(msgbuf,"yeah");
-	if(write(fdB, msgbuf, MSGSIZE+1) == -1){
-		perror("receiver: error in writing"); exit(2);
-	}
-	kill(getppid(),SIGUSR1);	//Inform the parent that we responded
-	ready = 0;
-
-	for (;;){
-		sleep(3);
-	}
+	
+	free(inPipe);
+	free(outPipe);
+	free(id);
 }

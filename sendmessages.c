@@ -30,7 +30,7 @@ void sigCheckPipe(int signum){
 	}
 }
 
-int main(int argc, char *argv[]){
+void setupSigActions(){
 	struct sigaction sigchld;
 	sigchld.sa_handler = sigChild;
 	sigemptyset (&sigchld.sa_mask);
@@ -41,6 +41,11 @@ int main(int argc, char *argv[]){
 	sigemptyset(&sigusr1.sa_mask);
 	sigusr1.sa_flags = 0;
 	sigaction(SIGUSR1,&sigusr1,NULL);
+}
+
+int main(int argc, char *argv[]){
+
+	setupSigActions();
 
 	char * docfile;
 	int w;
@@ -89,12 +94,11 @@ int main(int argc, char *argv[]){
 	//Inform children that they are ready to go
 	//Equivilent of promting them to execute a command such as /search
 	for(int i=0; i<w; i++){
-		kill(childPIDs[i],SIGUSR2);
+		writeToChild(i,out[i],"yeah");
 	}
 
 	//Whild there is a child that hasnt sent a response
 	int sum = 0;
-	int start = time(NULL);
 	while(sum != w){
 		sum = 0;
 		for(int i=0; i<w; i++){
@@ -104,7 +108,7 @@ int main(int argc, char *argv[]){
 
 	signal(SIGCHLD,SIG_DFL);
 	for(int i=0; i<w; i++)
-		if(kill(childPIDs[i],0) == 0) writeToChild(i,out[i],"/exit");
+		kill(childPIDs[i],SIGUSR2);
 	for(int i=0; i<w; i++)
 		unlink(outPipes[i]);
 	for(int i=0; i<w; i++)
