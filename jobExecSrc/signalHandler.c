@@ -20,7 +20,7 @@ void sigCheckPipe(int signum){
 	for(int i=0; i<w; i++){
 		if(read(in[i], msgbuf, MSGSIZE+1) > 0){
 			printf("Message from child #%d: -%s-\n",i,msgbuf);
-			if(strcmp(msgbuf,"yeah") == 0) responses[i] = 1;
+			responses[i] = 1;
 		}
 	}
 }

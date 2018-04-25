@@ -47,19 +47,38 @@ int main(int argc, char *argv[]){
 	if(openAndTestPipes() == 0)
 		exit(2);
 
-	//Send short message to all the workers
+	//Send directory info to workers
+	char msgbuf[MSGSIZE+1];
 	for(int i=0; i<w; i++){
-		writeToChild(i,"yeah");
-	}
-
-	//Whild there is a child that hasnt sent a response
-	int sum = 0;
-	while(sum != w){
-		sum = 0;
-		for(int i=0; i<w; i++){
-			sum += responses[i];
+		char num[8] = {0};			//String with the number of directories
+		sprintf(num, "%d", workers[i].dirCount);
+		writeToChild(i,num);
+		readFromPipe(i,msgbuf);
+		if(strcmp(num,msgbuf) != 0){
+			printf("Communication error with worker #%d.\n",i);
+			exit(2);
+		}
+		for(int j=0; j<workers[i].dirCount; j++){
+			writeToChild(i,workers[i].directories[j]);
+			readFromPipe(i,msgbuf);
+			if(strcmp(workers[i].directories[j],msgbuf) != 0){
+				printf("Communication error with worker #%d.\n",i);
+				exit(2);
+			}
 		}
 	}
+
+	nonBlockingInputPipes();
+
+	//Whild there is a child that hasnt sent a response
+	// int sum = 0;
+	// while(sum != w){
+	// 	sum = 0;
+	// 	for(int i=0; i<w; i++){
+	// 		sum += responses[i];
+	// 	}
+	// }
+	// for(int i=0; i<w; i++) responses[i] = 0;
 
 	signal(SIGCHLD,SIG_DFL);
 	for(int i=0; i<w; i++)

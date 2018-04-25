@@ -64,13 +64,16 @@ int openAndTestPipes(){
 			return 0;
 		}
 	}
+	printf("All workers up and running.\n");
+	return 1;
+}
+
+void nonBlockingInputPipes(){
 	for(int i=0; i<w; i++){
-		//Reopen the pipe with non blocking argument
+		//Reopen the input pipes with non blocking argument
 		close(in[i]);
 		in[i] = open(inPipes[i], O_RDONLY | O_NONBLOCK);
 	}
-	printf("All workers up and running.\n");
-	return 1;
 }
 
 void createReceiver(int id){

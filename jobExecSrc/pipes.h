@@ -25,6 +25,7 @@ void readFromPipe(int id, char * message);
 void createNamedPipe(char * pipeName);
 void allocateSpace();
 int openAndTestPipes();
+void nonBlockingInputPipes();
 void createReceiver(int id);
 void reCreateReceiver(int id);
 void getName(int id, char ** outPipes, char ** inPipes);

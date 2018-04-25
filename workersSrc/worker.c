@@ -6,6 +6,10 @@ char * inPipe;
 char * outPipe;
 char * id;
 
+int dirCount;
+char ** directories;
+
+int stage;
 int done;
 
 void manageArguments(int argc, char *argv[]){
@@ -23,6 +27,7 @@ int main(int argc, char *argv[]){
 	openPipes();
 
 	done = 0;
+	stage = 1;
 
 	while(!done){
 		pause();
@@ -31,4 +36,8 @@ int main(int argc, char *argv[]){
 	free(inPipe);
 	free(outPipe);
 	free(id);
+	for(int i=0; i<dirCount; i++){
+		free(directories[i]);
+	}
+	free(directories);
 }

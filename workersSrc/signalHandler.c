@@ -1,18 +1,46 @@
 #include "signalHandler.h"
 
 extern char * id;
+extern int stage;
 extern int done;
+
+extern int dirCount;
+extern char ** directories;
+
+int dirReceived;
 
 void sigCheckPipe(int signum){
 	char msgbuf[MSGSIZE+1] = {0};
 
 	readFromPipe(msgbuf);
-	printf("%d. Message Received: -%s-\n", atoi(id), msgbuf);
+	printf("Worker #%d: Message Received: -%s-\n", atoi(id), msgbuf);
 
-	if(strcmp(msgbuf,"/test") == 0)
+	if(strcmp(msgbuf,"/test") == 0){
 		writeToPipe(msgbuf);
+		return;
+	}
 
-	if(strcmp(msgbuf,"yeah") == 0){
+	if(stage == 1){
+		dirCount = atoi(msgbuf);
+		directories = malloc(dirCount*sizeof(char*));
+		stage++;
+		dirReceived = 0;
+		writeToPipe(msgbuf);
+	}
+	else if(stage == 2){
+		directories[dirReceived] = malloc(strlen(msgbuf)+1);
+		strcpy(directories[dirReceived],msgbuf);
+		dirReceived++;
+		if(dirReceived == dirCount){
+			printf("I'm worker #%d and these are my directories:\n",atoi(id));
+			for(int i=0; i<dirCount; i++){
+				printf("\t-%s-\n",directories[i]);
+			}
+			stage++;
+		}
+		writeToPipe(msgbuf);
+	}
+	else if(stage == 3){
 		writeToPipe(msgbuf);
 		kill(getppid(),SIGUSR1);	//Inform the parent that we responded
 	}
