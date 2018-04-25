@@ -10,13 +10,21 @@
 #include <unistd.h>
 #include <math.h>
 
+typedef struct workerInfo{
+	pid_t pid;
+	int numberOfDirectories;
+	char ** directories;
+} workerInfo;
+
 #define MSGSIZE 512
 
 int openForReading(char * name);
 int openForWriting(char * name);
-void writeToChild(int id, int fd, char * message);
-void readFromPipe(int fd, char * message);
+void writeToChild(int id, char * message);
+void readFromPipe(int id, char * message);
 void createNamedPipe(char * pipeName);
+void allocateSpace();
+int openAndTestPipes();
 void createReceiver(int id);
 void reCreateReceiver(int id);
 void getName(int id, char ** outPipes, char ** inPipes);

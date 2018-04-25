@@ -1,10 +1,12 @@
 #include "pipes.h"
 
-extern pid_t * childPIDs;
+extern int w;
+extern struct workerInfo * workers;
 extern int * out;
 extern int * in;
 extern char ** outPipes;					//Output named pipes
 extern char ** inPipes;					//Input named pipes
+extern int * responses;
 
 int openForReading(char * name){
 	return open(name, O_RDONLY);
@@ -14,18 +16,18 @@ int openForWriting(char * name){
 	return open(name, O_WRONLY);
 }
 
-void writeToChild(int id, int fd, char * message){
-	if(write(fd, message, MSGSIZE+1) == -1){
+void writeToChild(int id, char * message){
+	if(write(out[id], message, MSGSIZE+1) == -1){
 		perror("sender: error in writing:"); exit(2);
 	}
 
 		// printf("About to signal child with pid: %d\n",childPIDs[id]);
-	int retval = kill(childPIDs[id],SIGUSR1);	//signal child to read from pipe
+	int retval = kill(workers[id].pid,SIGUSR1);	//signal child to read from pipe
 			// printf("Signal retval was: %d\n",retval);
 }
 
-void readFromPipe(int fd, char * message){
-	if(read(fd, message, MSGSIZE+1) < 0){
+void readFromPipe(int id, char * message){
+	if(read(in[id], message, MSGSIZE+1) < 0){
 		perror("sender: problem in reading"); exit(5);
 	}
 }
@@ -38,10 +40,43 @@ void createNamedPipe(char * pipeName){
 	}
 }
 
+void allocateSpace(){
+	responses = malloc(w*sizeof(int));
+	for(int i=0; i<w; i++) responses[i] = 0;
+
+	out = malloc(w*sizeof(int));		//Output named pipe file descriptors
+	in = malloc(w*sizeof(int));			//Input named pipe file descriptors
+
+	workers = malloc(w*sizeof(struct workerInfo));
+}
+
+//This functions opens and tests both input and output pipes for every worker
+int openAndTestPipes(){
+	char msgbuf[MSGSIZE+1] = {0};	//Buffer to be used with named pipes
+	for(int i=0; i<w; i++){
+		out[i]=openForWriting(outPipes[i]);
+		in[i]=openForReading(inPipes[i]);
+		usleep(10000);
+		writeToChild(i,"/test");
+		readFromPipe(i,msgbuf);
+		if(strcmp(msgbuf,"/test") != 0){
+			printf("Communication error with worker #%d.\n",i);
+			return 0;
+		}
+	}
+	for(int i=0; i<w; i++){
+		//Reopen the pipe with non blocking argument
+		close(in[i]);
+		in[i] = open(inPipes[i], O_RDONLY | O_NONBLOCK);
+	}
+	printf("All workers up and running.\n");
+	return 1;
+}
+
 void createReceiver(int id){
 	pid_t pid = fork();
 	if(pid != 0){
-		childPIDs[id] = pid;	//Store child pid in global array
+		workers[id].pid = pid;	//Store child pid in global array
 		printf("New child created with pid: %d\n",(int)pid);
 		return;
 	}
@@ -63,15 +98,15 @@ void createReceiver(int id){
 void reCreateReceiver(int id){
 	pid_t pid = fork();
 	if(pid != 0){
-		childPIDs[id] = pid;	//Store child pid in global array
+		workers[id].pid = pid;	//Store child pid in global array
 		printf("New child created with pid: %d\n",(int)pid);
 		createNamedPipe(outPipes[id]);
 		createNamedPipe(inPipes[id]);
 		out[id] = openForWriting(outPipes[id]);
 		in[id] = openForReading(inPipes[id]);
-		writeToChild(id,out[id],"/test");
+		writeToChild(id,"/test");
 		char msgbuf[MSGSIZE+1] = {0};
-		readFromPipe(in[id],msgbuf);
+		readFromPipe(id,msgbuf);
 		if(strcmp(msgbuf,"/test") != 0){
 			printf("Communication error with worker #%d.\n",id);
 			exit(2);
