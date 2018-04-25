@@ -12,7 +12,7 @@
 
 typedef struct workerInfo{
 	pid_t pid;
-	int numberOfDirectories;
+	int dirCount;
 	char ** directories;
 } workerInfo;
 

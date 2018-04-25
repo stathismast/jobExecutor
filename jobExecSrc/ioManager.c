@@ -1,8 +1,87 @@
 #include "ioManager.h"
 
-// void getDirectories(char *** directories){
-//
-// }
+extern int w;
+extern struct workerInfo * workers;
+extern int numberOfDirectories;
+extern char ** allDirectories;
+
+void removeNewLine(char ** str){
+    for(int i=0; i<strlen(*str); i++){
+        if((*str)[i] == '\n'){
+            (*str)[i] = 0;
+        }
+    }
+}
+
+int countLines(char * file){
+    FILE *stream;
+    char *line = NULL;
+    size_t len = 0;
+
+    if((stream = fopen(file, "r")) == NULL){
+		printf("Cannot open given docfile.");
+	    exit(4);
+	}
+
+    int lineCounter = 0;
+    while(getline(&line, &len, stream) != -1) {
+        lineCounter++;
+    }
+
+    free(line);
+    fclose(stream);
+    return lineCounter;
+}
+
+int getLines(char * file, char *** directories){
+    int lineCounter = countLines(file);
+    *directories = malloc(lineCounter*sizeof(char*));
+
+    FILE *stream;
+    char *line = NULL;
+    size_t len = 0;
+
+	if((stream = fopen(file, "r")) == NULL){
+		printf("Cannot open given docfile.");
+	    exit(4);
+	}
+
+    for(int i=0; i<lineCounter; i++){
+        getline(&line, &len, stream);
+        (*directories)[i] = malloc(strlen(line)+1);
+        strcpy((*directories)[i],line);
+        removeNewLine(&(*directories)[i]);
+    }
+
+    free(line);
+    fclose(stream);
+    return lineCounter;
+}
+
+void distributeDirectories(){
+	for(int i=0; i<w; i++)
+		workers[i].dirCount = numberOfDirectories/w;
+
+	for(int i=0; i<numberOfDirectories%w; i++)
+		workers[i].dirCount++;
+
+	// for(int i=0; i<w; i++)
+	// 	printf("%d. %d directorie(s)\n", i, workers[i].dirCount);
+
+	int pos=0;
+	for(int i=0; i<w; i++){
+		workers[i].directories = malloc(workers[i].dirCount*sizeof(char*));
+		for(int j=0; j<workers[i].dirCount; j++){
+			workers[i].directories[j] = malloc(strlen(allDirectories[pos])+1);
+			strcpy(workers[i].directories[j], allDirectories[pos]);
+			pos++;
+		}
+		// printf("Directories for %d:\n",i);
+		// for(int j=0; j<workers[i].dirCount; j++){
+		// 	printf("\t%s\n",workers[i].directories[j]);
+		// }
+	}
+}
 
 //Manages arguments given on execution and checks for errors
 int manageArguments(int argc, char *argv[], char ** docfile, int * numWorkers){

@@ -1,4 +1,4 @@
-workersSource = 4
+workers = 4
 
 all:
 	gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
@@ -15,7 +15,7 @@ run:
 	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
-	@./jobExecutor -w $(workersSource) -d docfile.txt;
+	@./jobExecutor -w $(workers) -d docfile.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;
@@ -26,7 +26,7 @@ valgrind:
 	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
-	@valgrind --leak-check=full --trace-children=yes ./jobExecutor -w $(workersSource) -d docfile.txt;
+	@valgrind --leak-check=full --trace-children=yes ./jobExecutor -w $(workers) -d docfile.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;
@@ -37,7 +37,7 @@ verbose:
 	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
-	@valgrind --leak-check=full --track-origins=yes ./jobExecutor -w $(workersSource) -d docfile.txt;
+	@valgrind --leak-check=full --track-origins=yes ./jobExecutor -w $(workers) -d docfile.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;
