@@ -1,4 +1,5 @@
 #include "signalHandler.h"
+#include <dirent.h>
 
 int in;
 int out;
@@ -7,7 +8,7 @@ char * outPipe;
 char * id;
 
 int dirCount;
-char ** directories;
+dirInfo * directories;
 
 int stage;
 int done;
@@ -37,7 +38,11 @@ int main(int argc, char *argv[]){
 	free(outPipe);
 	free(id);
 	for(int i=0; i<dirCount; i++){
-		free(directories[i]);
+		for(int j=0; j<directories[i].fileCount; j++){
+			free(directories[i].files[j].fileName);
+		}
+		free(directories[i].dirName);
+		free(directories[i].files);
 	}
 	free(directories);
 }

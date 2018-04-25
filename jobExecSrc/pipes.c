@@ -17,13 +17,12 @@ int openForWriting(char * name){
 }
 
 void writeToChild(int id, char * message){
-	if(write(out[id], message, MSGSIZE+1) == -1){
+	char msgbuf[MSGSIZE+1] = {0};
+	strcpy(msgbuf,message);
+	if(write(out[id], msgbuf, MSGSIZE+1) == -1){
 		perror("sender: error in writing:"); exit(2);
 	}
-
-		// printf("About to signal child with pid: %d\n",childPIDs[id]);
-	int retval = kill(workers[id].pid,SIGUSR1);	//signal child to read from pipe
-			// printf("Signal retval was: %d\n",retval);
+	kill(workers[id].pid,SIGUSR1);	//signal child to read from pipe
 }
 
 void readFromPipe(int id, char * message){

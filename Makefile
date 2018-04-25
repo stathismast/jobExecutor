@@ -37,7 +37,7 @@ verbose:
 	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
-	@valgrind --leak-check=full --track-origins=yes ./jobExecutor -w $(workers) -d docfile.txt;
+	@valgrind --leak-check=full --track-origins=yes -v ./jobExecutor -w $(workers) -d docfile.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;

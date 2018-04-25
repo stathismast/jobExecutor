@@ -2,65 +2,66 @@
 #include <stdlib.h>
 #include <string.h>
 
-void removeNewLine(char ** str){
-    for(int i=0; i<strlen(*str); i++){
-        if((*str)[i] == '\n'){
-            (*str)[i] = 0;
-        }
+#include <dirent.h>
+
+int countFiles(char * directory){
+    DIR *dir;
+    struct dirent *ent;
+    int fileCount = 0;
+    if((dir = opendir("dir1")) == NULL) {
+        perror ("worker:");
+        exit(3);
     }
+      /* print all the files and directories within directory */
+    while((ent = readdir(dir)) != NULL) {
+        fileCount++;
+    }
+    closedir (dir);
+    return fileCount-2; //Don't include current and parent directories
 }
 
-int countLines(char * file){
-    FILE *stream;
-    char *line = NULL;
-    size_t len = 0;
+int getFiles(char * directory, char *** files){
+    DIR *dir;
+    struct dirent *ent;
 
-    if((stream = fopen(file, "r")) == NULL)
-        exit(4);
+    int fileCount = countFiles(directory);
+    *files = malloc(fileCount*sizeof(char*));
 
-    int lineCounter = 0;
-    while(getline(&line, &len, stream) != -1) {
-        lineCounter++;
+    if((dir = opendir(directory)) == NULL) {
+        perror("worker:");
+        exit(3);
     }
 
-    free(line);
-    fclose(stream);
-    return lineCounter;
-}
-
-int getLines(char * file, char *** directories){
-    int lineCounter = countLines(file);
-    *directories = malloc(lineCounter*sizeof(char*));
-
-    FILE *stream;
-    char *line = NULL;
-    size_t len = 0;
-
-    if((stream = fopen("docfile.txt", "r")) == NULL)
-        exit(4);
-
-    for(int i=0; i<lineCounter; i++){
-        getline(&line, &len, stream);
-        (*directories)[i] = malloc(strlen(line)+1);
-        strcpy((*directories)[i],line);
-        removeNewLine(&(*directories)[i]);
+    ent = readdir(dir); //Consume curent and parent directories
+    ent = readdir(dir);
+    for(int i=0; i<fileCount; i++){
+        ent = readdir(dir);
+        (*files)[i] = malloc(strlen(directory)+strlen(ent->d_name)+2);
+        (*files)[i][0] = 0;
+        strcat((*files)[i],directory);
+        strcat((*files)[i],"/");
+        strcat((*files)[i],ent->d_name);
+        strcat((*files)[i],"\0");
     }
-
-    free(line);
-    fclose(stream);
-    return lineCounter;
+    closedir (dir);
+    return fileCount;
 }
 
 int main(void){
-    char ** directories;
-    int lineCounter = getLines("docfile.txt",&directories);
 
-    for(int i=0; i<lineCounter; i++){
-        printf("%d. -%s-\n", i+1, directories[i]);
+    char * directory = malloc(10);
+    strcpy(directory,"dir1");
+    char ** files;
+
+    int fileCount = getFiles(directory,&files);
+
+    for(int i=0; i<fileCount; i++){
+        printf("-%s-\n",files[i]);
     }
 
-    for(int i=0; i<lineCounter; i++){
-        free(directories[i]);
+    for(int i=0; i<fileCount; i++){
+        free(files[i]);
     }
-    free(directories);
+    free(files);
+    free(directory);
 }
