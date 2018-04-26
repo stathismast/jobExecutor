@@ -48,8 +48,13 @@ void sigCheckPipe(int signum){
 			char response[MSGSIZE+1] = {0};
 			sprintf(response,"%d %d %d ",totalLines,totalWords,totalLetters);
 			writeToPipe(response);
-			return;
+			stage++;
 		}
+		else{
+			printf("Worker error: Expected message to calculate word count.\n")
+		}
+	}
+	else if(stage == 4){
 		writeToPipe(msgbuf);
 		kill(getppid(),SIGUSR1);	//Inform the parent that we responded
 	}
