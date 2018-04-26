@@ -51,7 +51,7 @@ void sigCheckPipe(int signum){
 			stage++;
 		}
 		else{
-			printf("Worker error: Expected message to calculate word count.\n")
+			printf("Worker error: Expected message to calculate word count.\n");
 		}
 	}
 	else if(stage == 4){
