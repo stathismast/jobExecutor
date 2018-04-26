@@ -69,8 +69,6 @@ void getFiles(struct dirInfo * directory){
         strcat(directory->files[i].fileName,"\0");
         getLines(&directory->files[i]);
         addLinesToTrie(&directory->files[i],i);
-        if(getPostingList("sometimes",directory->files[i].trie) != NULL)
-            printf("JUST LEFT OUT DUBAI WITH ALL MY FOLK - OPEN WATER MY LOCATION IS REMOTE (%s)\n",directory->files[i].fileName);
     }
     closedir (dir);
 }

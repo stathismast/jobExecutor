@@ -11,10 +11,19 @@ struct workerInfo * workers;
 int numberOfDirectories;
 char ** allDirectories;
 
+int totalLines;
+int totalWords;
+int totalLetters;
+
 int * responses;
 
 int main(int argc, char *argv[]){
 	setupSigActions();
+
+
+	totalLines = 0;
+	totalWords = 0;
+	totalLetters = 0;
 
 	//Read and check arguments for validity
 	char * docfile;
@@ -68,9 +77,18 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-	nonBlockingInputPipes();
+	//nonBlockingInputPipes();
+	
+	for(int i=0; i<w; i++){
+		writeToChild(i,"/wc");
+		readFromPipe(i,msgbuf);
+		totalLines += atoi(strtok(msgbuf," "));
+		totalWords += atoi(strtok(NULL," "));
+		totalLetters += atoi(strtok(NULL," "));
+	}
+	printf("wc: %d %d %d\n", totalLines,totalWords,totalLetters);
 
-	//Whild there is a child that hasnt sent a response
+	//While there is a child that hasnt sent a response
 	// int sum = 0;
 	// while(sum != w){
 	// 	sum = 0;

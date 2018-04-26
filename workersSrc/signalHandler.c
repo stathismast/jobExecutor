@@ -7,6 +7,10 @@ extern int done;
 extern int dirCount;
 extern struct dirInfo * directories;
 
+extern int totalLines;
+extern int totalWords;
+extern int totalLetters;
+
 int dirReceived;
 
 void sigCheckPipe(int signum){
@@ -40,6 +44,12 @@ void sigCheckPipe(int signum){
 		writeToPipe(msgbuf);
 	}
 	else if(stage == 3){
+		if(strcmp(msgbuf,"/wc") == 0){
+			char response[MSGSIZE+1] = {0};
+			sprintf(response,"%d %d %d ",totalLines,totalWords,totalLetters);
+			writeToPipe(response);
+			return;
+		}
 		writeToPipe(msgbuf);
 		kill(getppid(),SIGUSR1);	//Inform the parent that we responded
 	}
