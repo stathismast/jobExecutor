@@ -3,6 +3,10 @@
 extern int dirCount;
 extern struct dirInfo * directories;
 
+extern int totalLines;
+extern int totalWords;
+extern int totalLetters;
+
 void loadDirInfo(){
     for(int i=0; i<dirCount; i++)
         getFiles(&directories[i]);
@@ -64,6 +68,9 @@ void getFiles(struct dirInfo * directory){
         strcat(directory->files[i].fileName,ent->d_name);
         strcat(directory->files[i].fileName,"\0");
         getLines(&directory->files[i]);
+        addLinesToTrie(&directory->files[i],i);
+        if(getPostingList("sometimes",directory->files[i].trie) != NULL)
+            printf("JUST LEFT OUT DUBAI WITH ALL MY FOLK - OPEN WATER MY LOCATION IS REMOTE (%s)\n",directory->files[i].fileName);
     }
     closedir (dir);
 }
@@ -100,6 +107,8 @@ void getLines(fileInfo * file){
     int lineCounter = countLines(file->fileName);
     file->lines = malloc(lineCounter*sizeof(char*));
 
+    totalLines += lineCounter;
+
     FILE *stream;
     char *line = NULL;
     size_t len = 0;
@@ -114,9 +123,19 @@ void getLines(fileInfo * file){
         file->lines[i] = malloc(strlen(line)+1);
         strcpy(file->lines[i],line);
         removeNewLine(&file->lines[i]);
+        totalLetters += strlen(line);
     }
 
     free(line);
     fclose(stream);
     file->lineCounter = lineCounter;
+}
+
+void addLinesToTrie(fileInfo * file, int id){
+    int wordCount;
+    file->trie = NULL;
+    for(int i=0; i<file->lineCounter; i++){
+        wordCount = addWordsIntoTrie(file->lines[i],id,&file->trie);
+        totalWords += wordCount;
+    }
 }

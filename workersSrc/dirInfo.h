@@ -5,10 +5,13 @@
 #include <unistd.h>
 #include <dirent.h>
 
+#include "trie.h"
+
 typedef struct fileInfo{
 	char * fileName;
     char ** lines;
     int lineCounter;
+    TrieNode * trie;
 } fileInfo;
 
 typedef struct dirInfo{
@@ -26,3 +29,4 @@ void getFiles(struct dirInfo * directory);
 void removeNewLine(char ** str);
 int countLines(char * file);
 void getLines(fileInfo * file);
+void addLinesToTrie(fileInfo * file, int id);

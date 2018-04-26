@@ -1,7 +1,7 @@
 workers = 4
 
 all:
-	gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c;
+	gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c workersSrc/trie.c;
 	gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 
 fifo:
@@ -12,7 +12,7 @@ clean:
 
 run:
 	@echo "Compiling..."
-	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c;
+	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c workersSrc/trie.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
 	@./jobExecutor -w $(workers) -d docfile.txt;
@@ -23,7 +23,7 @@ run:
 
 valgrind:
 	@echo "Compiling..."
-	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c;
+	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c workersSrc/trie.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
 	@valgrind --leak-check=full --trace-children=yes ./jobExecutor -w $(workers) -d docfile.txt;
@@ -34,7 +34,7 @@ valgrind:
 
 verbose:
 	@echo "Compiling..."
-	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c;
+	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c workersSrc/trie.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c -lm
 	@echo -----------------------------------------------------------------;
 	@valgrind --leak-check=full --track-origins=yes -v ./jobExecutor -w $(workers) -d docfile.txt;

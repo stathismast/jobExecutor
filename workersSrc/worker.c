@@ -9,6 +9,10 @@ char * id;
 int dirCount;
 dirInfo * directories;
 
+int totalLines;
+int totalWords;
+int totalLetters;
+
 int stage;
 int done;
 
@@ -26,12 +30,18 @@ int main(int argc, char *argv[]){
 	manageArguments(argc,argv);
 	openPipes();
 
+	totalLines = 0;
+	totalWords = 0;
+	totalLetters = 0;
+
 	done = 0;
 	stage = 1;
 
 	while(!done){
 		pause();
 	}
+
+	printf("%dwc: %d %d %d\n",atoi(id),totalLines,totalWords,totalLetters);
 
 	free(inPipe);
 	free(outPipe);
@@ -43,6 +53,7 @@ int main(int argc, char *argv[]){
 				free(directories[i].files[j].lines[k]);
 			}
 			free(directories[i].files[j].lines);
+			freeTrie(directories[i].files[j].trie);
 		}
 		free(directories[i].dirName);
 		free(directories[i].files);
