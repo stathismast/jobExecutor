@@ -68,7 +68,7 @@ void getFiles(struct dirInfo * directory){
         strcat(directory->files[i].fileName,ent->d_name);
         strcat(directory->files[i].fileName,"\0");
         getLines(&directory->files[i]);
-        addLinesToTrie(&directory->files[i],i);
+        addLinesToTrie(&directory->files[i]);
     }
     closedir (dir);
 }
@@ -129,14 +129,13 @@ void getLines(fileInfo * file){
     file->lineCounter = lineCounter;
 }
 
-void addLinesToTrie(fileInfo * file, int id){
+void addLinesToTrie(fileInfo * file){
     int wordCount;
     file->trie = NULL;
     for(int i=0; i<file->lineCounter; i++){
-        wordCount = addWordsIntoTrie(file->lines[i],id,&file->trie);
+        wordCount = addWordsIntoTrie(file->lines[i],i,&file->trie);
         totalWords += wordCount;
     }
-    getWordCount("This", file);
 }
 
 int getWordCount(char * word, fileInfo * file){

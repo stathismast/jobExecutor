@@ -1,5 +1,5 @@
 #include "pipes.h"
-#include "dirInfo.h"
+#include "searchInfo.h"
 
 void sigCheckPipe(int signum);
 void sigDone(int signum);

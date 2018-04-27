@@ -16,6 +16,9 @@ int totalLetters;
 int stage;
 int done;
 
+SearchInfo * searchResults;
+int resultsCount;
+
 void manageArguments(int argc, char *argv[]){
 	inPipe = malloc(strlen(argv[1])+1);
 	strcpy(inPipe,argv[1]);
@@ -23,6 +26,21 @@ void manageArguments(int argc, char *argv[]){
 	strcpy(outPipe,argv[2]);
 	id = malloc(strlen(argv[3])+1);
 	strcpy(id,argv[3]);
+}
+
+void searchForWord(char * searchTerm){
+	for(int i=0; i<dirCount; i++){
+		for(int j=0; j<directories[i].fileCount; j++){
+			PostingListHead * pl = getPostingList(searchTerm,directories[i].files[j].trie);
+			if(pl != NULL){
+				PostingListNode * plNode = pl->next;
+				while(plNode != NULL){
+					resultsCount += addSearchResult(plNode->id,&directories[i].files[j],&searchResults);
+					plNode = plNode->next;
+				}
+			}
+		}
+	}
 }
 
 int main(int argc, char *argv[]){
@@ -37,18 +55,17 @@ int main(int argc, char *argv[]){
 	done = 0;
 	stage = 1;
 
+	searchResults = NULL;
+
 	while(!done){
 		pause();
 	}
 
-	// char * temp;
-	// int count = getMaxWordCount("I",&temp);
-	// printf("MAX: %d: %s\n",count, temp);
-	// free(temp);
-	// count = getMinWordCount("I",&temp);
-	// printf("MIN: %d: %s\n",count, temp);
-	// free(temp);
-	// printf("%dwc: %d %d %d\n",atoi(id),totalLines,totalWords,totalLetters);
+	resultsCount = 0;
+	searchForWord("don't");
+	searchForWord("sometimes");
+	printSearchResults(searchResults);
+	freeSearchInfo(searchResults);
 
 	free(inPipe);
 	free(outPipe);
@@ -66,4 +83,5 @@ int main(int argc, char *argv[]){
 		free(directories[i].files);
 	}
 	free(directories);
+
 }

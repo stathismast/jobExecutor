@@ -29,7 +29,7 @@ void getFiles(struct dirInfo * directory);
 void removeNewLine(char ** str);
 int countLines(char * file);
 void getLines(fileInfo * file);
-void addLinesToTrie(fileInfo * file, int id);
+void addLinesToTrie(fileInfo * file);
 int getWordCount(char * word, fileInfo * file);
 int getMaxWordCount(char * word, char ** fileName);
 int getMinWordCount(char * word, char ** fileName);
