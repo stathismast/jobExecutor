@@ -41,7 +41,14 @@ int main(int argc, char *argv[]){
 		pause();
 	}
 
-	printf("%dwc: %d %d %d\n",atoi(id),totalLines,totalWords,totalLetters);
+	// char * temp;
+	// int count = getMaxWordCount("I",&temp);
+	// printf("MAX: %d: %s\n",count, temp);
+	// free(temp);
+	// count = getMinWordCount("I",&temp);
+	// printf("MIN: %d: %s\n",count, temp);
+	// free(temp);
+	// printf("%dwc: %d %d %d\n",atoi(id),totalLines,totalWords,totalLetters);
 
 	free(inPipe);
 	free(outPipe);

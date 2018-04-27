@@ -25,6 +25,14 @@ void writeToChild(int id, char * message){
 	kill(workers[id].pid,SIGUSR1);	//signal child to read from pipe
 }
 
+void writeToPipe(int id, char * message){
+	char msgbuf[MSGSIZE+1] = {0};
+	strcpy(msgbuf,message);
+	if(write(out[id], msgbuf, MSGSIZE+1) == -1){
+		perror("sender: error in writing:"); exit(2);
+	}
+}
+
 void readFromPipe(int id, char * message){
 	if(read(in[id], message, MSGSIZE+1) < 0){
 		perror("sender: problem in reading"); exit(5);

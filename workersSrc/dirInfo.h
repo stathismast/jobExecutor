@@ -31,4 +31,5 @@ int countLines(char * file);
 void getLines(fileInfo * file);
 void addLinesToTrie(fileInfo * file, int id);
 int getWordCount(char * word, fileInfo * file);
-int getMaxWordCount(char * word, dirInfo * dir, char ** fileName);
+int getMaxWordCount(char * word, char ** fileName);
+int getMinWordCount(char * word, char ** fileName);

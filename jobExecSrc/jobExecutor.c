@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
 	//Send directory info to workers
 	char msgbuf[MSGSIZE+1];
 	for(int i=0; i<w; i++){
-		char num[8] = {0};			//String with the number of directories
+		char num[16] = {0};			//String with the number of directories
 		sprintf(num, "%d", workers[i].dirCount);
 		writeToChild(i,num);
 		readFromPipe(i,msgbuf);
@@ -78,7 +78,8 @@ int main(int argc, char *argv[]){
 	}
 
 	//nonBlockingInputPipes();
-	
+
+	//Receive word count statistics from every worker
 	for(int i=0; i<w; i++){
 		writeToChild(i,"/wc");
 		readFromPipe(i,msgbuf);
@@ -87,6 +88,72 @@ int main(int argc, char *argv[]){
 		totalLetters += atoi(strtok(NULL," "));
 	}
 	printf("wc: %d %d %d\n", totalLines,totalWords,totalLetters);
+
+	char keyword[100];
+	strcpy(keyword,"im");
+
+	//Execute a maxCount command
+	int * counts = malloc(w*sizeof(int));
+	char ** fileNames = malloc(w*sizeof(char*));
+	for(int i=0; i<w; i++){
+		writeToChild(i,"/maxcount");
+		writeToPipe(i,keyword);	//Send message to worker without signaling
+	}
+	for(int i=0; i<w; i++){
+		readFromPipe(i,msgbuf);
+		counts[i] = atoi(msgbuf);
+	}
+	for(int i=0; i<w; i++){
+		readFromPipe(i,msgbuf);
+		fileNames[i] = malloc(strlen(msgbuf)+1);
+		strcpy(fileNames[i],msgbuf);
+	}
+	int max = 1;
+	for(int i=1; i<w; i++){
+		if(counts[i] > counts[max])
+			max = i;
+	}
+	printf("maxcount: %d: %s\n", counts[max], fileNames[max]);
+	free(counts);
+	for(int i=0; i<w; i++){
+		free(fileNames[i]);
+	}
+	free(fileNames);
+
+	//Execute a minCount command
+	{int * counts = malloc(w*sizeof(int));
+	char ** fileNames = malloc(w*sizeof(char*));
+	for(int i=0; i<w; i++){
+		writeToChild(i,"/mincount");
+		writeToPipe(i,keyword);	//Send message to worker without signaling
+	}
+	for(int i=0; i<w; i++){
+		readFromPipe(i,msgbuf);
+		counts[i] = atoi(msgbuf);
+	}
+	for(int i=0; i<w; i++){
+		readFromPipe(i,msgbuf);
+		fileNames[i] = malloc(strlen(msgbuf)+1);
+		strcpy(fileNames[i],msgbuf);
+	}
+	int min = 1;
+	int found = 0;
+	for(int i=1; i<w; i++){
+		if(!found && counts[i] > 0){
+			min = i;
+			found = 1;
+		}
+		else if(counts[i] < counts[min] && counts[i] > 0)
+			min = i;
+	}
+	printf("mincount: %d: %s\n", counts[min], fileNames[min]);
+	free(counts);
+	for(int i=0; i<w; i++){
+		free(fileNames[i]);
+	}
+	free(fileNames);}
+
+
 
 	//While there is a child that hasnt sent a response
 	// int sum = 0;

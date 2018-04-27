@@ -21,6 +21,7 @@ typedef struct workerInfo{
 int openForReading(char * name);
 int openForWriting(char * name);
 void writeToChild(int id, char * message);
+void writeToPipe(int id, char * message);
 void readFromPipe(int id, char * message);
 void createNamedPipe(char * pipeName);
 void allocateSpace();

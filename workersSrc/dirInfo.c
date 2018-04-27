@@ -145,10 +145,68 @@ int getWordCount(char * word, fileInfo * file){
     if(pl != NULL)
         count = pl->totalCount;
     else count = 0;
-    printf("'%s' appears in file '%s' a total of %d times.\n", word, file->fileName, count);
+    // printf("'%s' appears in file '%s' a total of %d times.\n", word, file->fileName, count);
     return count;
 }
 
-int getMaxWordCount(char * word, dirInfo * dir, char ** fileName){
-    // int * counts = malloc()
+int getMaxWordCount(char * word,  char ** fileName){
+    int maxCount = 0;
+    *fileName = malloc(strlen(word)+49);
+    sprintf(*fileName, "The term '%s' does not exist in the given dataset.", word);
+
+    int count;
+    for(int i=0; i<dirCount; i++)
+        for(int j=0; j<directories[i].fileCount; j++){
+            count = getWordCount(word,&directories[i].files[j]);
+            if(count > maxCount){
+                maxCount = count;
+                free(*fileName);
+                *fileName = malloc(strlen(directories[i].files[j].fileName)+1);
+                strcpy(*fileName, directories[i].files[j].fileName);
+            }
+            else if(count == maxCount && count != 0){
+                if(strcmp(*fileName,directories[i].files[j].fileName) > 1){
+                    maxCount = count;
+                    free(*fileName);
+                    *fileName = malloc(strlen(directories[i].files[j].fileName)+1);
+                    strcpy(*fileName, directories[i].files[j].fileName);
+                }
+            }
+        }
+        return maxCount;
+}
+
+int getMinWordCount(char * word,  char ** fileName){
+    int found = 0;
+    int minCount = 0;
+    *fileName = malloc(strlen(word)+49);
+    sprintf(*fileName, "The term '%s' does not exist in the given dataset.", word);
+
+    int count;
+    for(int i=0; i<dirCount; i++)
+        for(int j=0; j<directories[i].fileCount; j++){
+            count = getWordCount(word,&directories[i].files[j]);
+            if(!found && count > 0){
+                minCount = count;
+                free(*fileName);
+                *fileName = malloc(strlen(directories[i].files[j].fileName)+1);
+                strcpy(*fileName, directories[i].files[j].fileName);
+                found = 1;
+            }
+            else if(count < minCount && count > 0){
+                minCount = count;
+                free(*fileName);
+                *fileName = malloc(strlen(directories[i].files[j].fileName)+1);
+                strcpy(*fileName, directories[i].files[j].fileName);
+            }
+            else if(count == minCount && count != 0){
+                if(strcmp(*fileName,directories[i].files[j].fileName) > 1){
+                    minCount = count;
+                    free(*fileName);
+                    *fileName = malloc(strlen(directories[i].files[j].fileName)+1);
+                    strcpy(*fileName, directories[i].files[j].fileName);
+                }
+            }
+        }
+        return minCount;
 }

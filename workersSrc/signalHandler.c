@@ -55,8 +55,36 @@ void sigCheckPipe(int signum){
 		}
 	}
 	else if(stage == 4){
-		writeToPipe(msgbuf);
-		kill(getppid(),SIGUSR1);	//Inform the parent that we responded
+		if(strcmp(msgbuf,"/maxcount") == 0){
+			readFromPipe(msgbuf);
+			char * word = malloc(strlen(msgbuf)+1);
+			strcpy(word,msgbuf);
+			char * fileName;
+			int count = getMaxWordCount(word,&fileName);
+			sprintf(msgbuf, "%d", count);
+			writeToPipe(msgbuf);
+			strcpy(msgbuf,fileName);
+			writeToPipe(msgbuf);
+			free(word);
+			free(fileName);
+		}
+		else if(strcmp(msgbuf,"/mincount") == 0){
+			readFromPipe(msgbuf);
+			char * word = malloc(strlen(msgbuf)+1);
+			strcpy(word,msgbuf);
+			char * fileName;
+			int count = getMinWordCount(word,&fileName);
+			sprintf(msgbuf, "%d", count);
+			writeToPipe(msgbuf);
+			strcpy(msgbuf,fileName);
+			writeToPipe(msgbuf);
+			free(word);
+			free(fileName);
+		}
+		else {
+			writeToPipe(msgbuf);
+			kill(getppid(),SIGUSR1);	//Inform the parent that we responded
+		}
 	}
 }
 
