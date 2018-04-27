@@ -1,9 +1,0 @@
-/input/dir1
-/input/dir2
-/input/dir3
-/input/dir4
-/input/dir5
-/input/dir6
-/input/dir7
-/input/dir8
-/input/dir9

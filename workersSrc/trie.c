@@ -122,7 +122,7 @@ PostingListHead * getPostingList(char * word, TrieNode * node){
 PostingListHead * newPostingListHead(){
 	PostingListHead * head = malloc(sizeof(PostingListHead));
 	if(head == NULL) { printf("ERROR: Memory allocation failed.\n"); exit(-1); }
-	head->documentFreq = 0;
+	head->totalCount = 0;
 	return head;
 }
 
@@ -154,7 +154,7 @@ void freePostingListNode(PostingListNode * node){
 void addToPostingList(int id, PostingListHead ** head){
 	if(*head == NULL){							//If there is no posting list for this letter
 		(*head) = newPostingListHead();			//Create a new posting list head
-		(*head)->documentFreq++;				//Increase the document frequency
+		(*head)->totalCount++;				//Increase the document frequency
 		(*head)->next = newPostingListNode(id);	//Add a posting list node to the head
 		(*head)->last = (*head)->next;			//Update pointer to last node of list
 	}
@@ -162,10 +162,11 @@ void addToPostingList(int id, PostingListHead ** head){
 		PostingListNode ** node = &(*head)->last;
 		if((*node)->id != id){							//If there is no posting list for the given id
 			(*node)->next = newPostingListNode(id);		//Create a new posting list node
-			(*head)->documentFreq++;					//Increase the total number of documents this word is in
+			(*head)->totalCount++;					//Increase the total number of documents this word is in
 			(*head)->last = (*node)->next;				//Update pointer to last node
 		}
 		else{ 											//If there is already a posting list node for the given id
+			(*head)->totalCount++;					//Increase the total number of documents this word is in
 			(*node)->count++;							//Just increase the count for that node
 		}
 	}

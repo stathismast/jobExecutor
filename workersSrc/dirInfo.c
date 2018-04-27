@@ -136,4 +136,19 @@ void addLinesToTrie(fileInfo * file, int id){
         wordCount = addWordsIntoTrie(file->lines[i],id,&file->trie);
         totalWords += wordCount;
     }
+    getWordCount("This", file);
+}
+
+int getWordCount(char * word, fileInfo * file){
+    PostingListHead * pl = getPostingList(word,file->trie);
+    int count;
+    if(pl != NULL)
+        count = pl->totalCount;
+    else count = 0;
+    printf("'%s' appears in file '%s' a total of %d times.\n", word, file->fileName, count);
+    return count;
+}
+
+int getMaxWordCount(char * word, dirInfo * dir, char ** fileName){
+    // int * counts = malloc()
 }

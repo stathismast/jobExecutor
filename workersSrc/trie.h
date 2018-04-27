@@ -11,7 +11,7 @@ typedef struct PostingListNode{
 //Head of a posting list. Every posting lists starts with this.
 //It contains the document frequency of the word and a pointer the first posting list node
 typedef struct PostingListHead{
-	int documentFreq;				//Document frequency of the word
+	int totalCount;				//Document frequency of the word
 	struct PostingListNode * next;	//Pointer to the first posting list node
 	struct PostingListNode * last;	//Pointer to the last node of the list
 } PostingListHead;
