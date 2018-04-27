@@ -11,6 +11,9 @@ extern int totalLines;
 extern int totalWords;
 extern int totalLetters;
 
+extern SearchInfo * searchResults;
+extern int resultsCount;
+
 int dirReceived;
 
 void sigCheckPipe(int signum){
@@ -81,6 +84,27 @@ void sigCheckPipe(int signum){
 			free(word);
 			free(fileName);
 		}
+		else if(strcmp(msgbuf,"/search") == 0){
+			readFromPipe(msgbuf);
+			int termCount = atoi(msgbuf);
+			char ** searchTerms = malloc(termCount*sizeof(char*));
+			for(int i=0; i<termCount; i++){
+				readFromPipe(msgbuf);
+				searchTerms[i] = malloc(strlen(msgbuf)+1);
+				strcpy(searchTerms[i],msgbuf);
+			}
+			searchResults = NULL;
+			resultsCount = 0;
+			for(int i=0; i<termCount; i++)
+				searchForWord(searchTerms[i]);
+			printf("Results from #%s: %d\n",id,resultsCount);
+			printSearchResults(searchResults);
+			freeSearchInfo(searchResults);
+			for(int i=0; i<termCount; i++)
+				free(searchTerms[i]);
+			free(searchTerms);
+			writeToPipe("done");
+		}
 		else {
 			writeToPipe(msgbuf);
 			kill(getppid(),SIGUSR1);	//Inform the parent that we responded
@@ -104,4 +128,19 @@ void setupSigActions(){
 	sigemptyset (&sigusr2.sa_mask);
 	sigusr2.sa_flags = 0;
 	sigaction(SIGUSR2,&sigusr2,NULL);
+}
+
+void searchForWord(char * searchTerm){
+	for(int i=0; i<dirCount; i++){
+		for(int j=0; j<directories[i].fileCount; j++){
+			PostingListHead * pl = getPostingList(searchTerm,directories[i].files[j].trie);
+			if(pl != NULL){
+				PostingListNode * plNode = pl->next;
+				while(plNode != NULL){
+					resultsCount += addSearchResult(plNode->id,&directories[i].files[j],&searchResults);
+					plNode = plNode->next;
+				}
+			}
+		}
+	}
 }

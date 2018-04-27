@@ -89,8 +89,12 @@ int main(int argc, char *argv[]){
 	}
 	printf("wc: %d %d %d\n", totalLines,totalWords,totalLetters);
 
+////////////////////////////////////////////////////////////////////////////////
+
 	char keyword[100];
 	strcpy(keyword,"im");
+
+////////////////////////////////////////////////////////////////////////////////
 
 	//Execute a maxCount command
 	int * counts = malloc(w*sizeof(int));
@@ -120,7 +124,9 @@ int main(int argc, char *argv[]){
 	}
 	free(fileNames);
 
-	//Execute a minCount command
+////////////////////////////////////////////////////////////////////////////////
+
+	//Execute a minCount command for 'keyword'
 	{int * counts = malloc(w*sizeof(int));
 	char ** fileNames = malloc(w*sizeof(char*));
 	for(int i=0; i<w; i++){
@@ -153,6 +159,29 @@ int main(int argc, char *argv[]){
 	}
 	free(fileNames);}
 
+////////////////////////////////////////////////////////////////////////////////
+
+	int termCount = 5;
+	sprintf(msgbuf,"%d",termCount);
+	char * searchTerms[5];
+	for(int i=0; i<termCount; i++)
+		searchTerms[i] = malloc(64);
+	strcpy(searchTerms[0],"G");
+	strcpy(searchTerms[1],"NBA");
+	strcpy(searchTerms[2],"sports...");
+	strcpy(searchTerms[3],"both");
+	strcpy(searchTerms[4],"broskis");
+	for(int i=0; i<w; i++)
+		writeToChild(i,"/search");
+	for(int i=0; i<w; i++)
+		writeToPipe(i,msgbuf);
+	for(int i=0; i<w; i++)
+		for(int j=0; j<termCount; j++)
+			writeToPipe(i,searchTerms[j]);
+	for(int i=0; i<w; i++)
+		readFromPipe(i,msgbuf);	//Wait for response signaling that the workers are done
+	for(int i=0; i<termCount; i++)
+		free(searchTerms[i]);
 
 
 	//While there is a child that hasnt sent a response
