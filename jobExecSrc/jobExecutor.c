@@ -1,5 +1,4 @@
-#include "signalHandler.h"
-#include <time.h>
+#include "commands.h"
 
 pid_t * childPIDs;
 int w;
@@ -17,9 +16,10 @@ int totalLetters;
 
 int * responses;
 
+
+
 int main(int argc, char *argv[]){
 	setupSigActions();
-
 
 	totalLines = 0;
 	totalWords = 0;
@@ -87,102 +87,8 @@ int main(int argc, char *argv[]){
 		totalWords += atoi(strtok(NULL," "));
 		totalLetters += atoi(strtok(NULL," "));
 	}
-	printf("wc: %d %d %d\n", totalLines,totalWords,totalLetters);
 
-////////////////////////////////////////////////////////////////////////////////
-
-	char keyword[100];
-	strcpy(keyword,"im");
-
-////////////////////////////////////////////////////////////////////////////////
-
-	//Execute a maxCount command
-	int * counts = malloc(w*sizeof(int));
-	char ** fileNames = malloc(w*sizeof(char*));
-	for(int i=0; i<w; i++){
-		writeToChild(i,"/maxcount");
-		writeToPipe(i,keyword);	//Send message to worker without signaling
-	}
-	for(int i=0; i<w; i++){
-		readFromPipe(i,msgbuf);
-		counts[i] = atoi(msgbuf);
-	}
-	for(int i=0; i<w; i++){
-		readFromPipe(i,msgbuf);
-		fileNames[i] = malloc(strlen(msgbuf)+1);
-		strcpy(fileNames[i],msgbuf);
-	}
-	int max = 1;
-	for(int i=1; i<w; i++){
-		if(counts[i] > counts[max])
-			max = i;
-	}
-	printf("maxcount: %d: %s\n", counts[max], fileNames[max]);
-	free(counts);
-	for(int i=0; i<w; i++){
-		free(fileNames[i]);
-	}
-	free(fileNames);
-
-////////////////////////////////////////////////////////////////////////////////
-
-	//Execute a minCount command for 'keyword'
-	{int * counts = malloc(w*sizeof(int));
-	char ** fileNames = malloc(w*sizeof(char*));
-	for(int i=0; i<w; i++){
-		writeToChild(i,"/mincount");
-		writeToPipe(i,keyword);	//Send message to worker without signaling
-	}
-	for(int i=0; i<w; i++){
-		readFromPipe(i,msgbuf);
-		counts[i] = atoi(msgbuf);
-	}
-	for(int i=0; i<w; i++){
-		readFromPipe(i,msgbuf);
-		fileNames[i] = malloc(strlen(msgbuf)+1);
-		strcpy(fileNames[i],msgbuf);
-	}
-	int min = 1;
-	int found = 0;
-	for(int i=1; i<w; i++){
-		if(!found && counts[i] > 0){
-			min = i;
-			found = 1;
-		}
-		else if(counts[i] < counts[min] && counts[i] > 0)
-			min = i;
-	}
-	printf("mincount: %d: %s\n", counts[min], fileNames[min]);
-	free(counts);
-	for(int i=0; i<w; i++){
-		free(fileNames[i]);
-	}
-	free(fileNames);}
-
-////////////////////////////////////////////////////////////////////////////////
-
-	int termCount = 5;
-	sprintf(msgbuf,"%d",termCount);
-	char * searchTerms[5];
-	for(int i=0; i<termCount; i++)
-		searchTerms[i] = malloc(64);
-	strcpy(searchTerms[0],"G");
-	strcpy(searchTerms[1],"NBA");
-	strcpy(searchTerms[2],"sports...");
-	strcpy(searchTerms[3],"both");
-	strcpy(searchTerms[4],"broskis");
-	for(int i=0; i<w; i++)
-		writeToChild(i,"/search");
-	for(int i=0; i<w; i++)
-		writeToPipe(i,msgbuf);
-	for(int i=0; i<w; i++)
-		for(int j=0; j<termCount; j++)
-			writeToPipe(i,searchTerms[j]);
-	for(int i=0; i<w; i++)
-		readFromPipe(i,msgbuf);	//Wait for response signaling that the workers are done
-	for(int i=0; i<termCount; i++)
-		free(searchTerms[i]);
-
+	commandInputLoop();
 
 	//While there is a child that hasnt sent a response
 	// int sum = 0;

@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <math.h>
+#include <time.h>
 
 typedef struct workerInfo{
 	pid_t pid;

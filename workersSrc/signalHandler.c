@@ -20,7 +20,7 @@ void sigCheckPipe(int signum){
 	char msgbuf[MSGSIZE+1] = {0};
 
 	readFromPipe(msgbuf);
-	printf("Worker #%d: Message Received: -%s-\n", atoi(id), msgbuf);
+	// printf("Worker #%d: Message Received: -%s-\n", atoi(id), msgbuf);
 
 	if(strcmp(msgbuf,"/test") == 0){
 		writeToPipe(msgbuf);
