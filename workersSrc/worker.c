@@ -19,6 +19,8 @@ int done;
 SearchInfo * searchResults;
 int resultsCount;
 
+FILE * myLog;
+
 void manageArguments(int argc, char *argv[]){
 	inPipe = malloc(strlen(argv[1])+1);
 	strcpy(inPipe,argv[1]);
@@ -37,6 +39,10 @@ int main(int argc, char *argv[]){
 	totalWords = 0;
 	totalLetters = 0;
 
+	char * logFileName = malloc(strlen(id)+16);
+	sprintf(logFileName,"log/Worker_%s.log",id);
+	myLog = fopen(logFileName, "w");
+
 	done = 0;
 	stage = 1;
 
@@ -45,7 +51,8 @@ int main(int argc, char *argv[]){
 		pause();
 	}
 
-
+	fclose(myLog);
+	free(logFileName);
 	free(inPipe);
 	free(outPipe);
 	free(id);

@@ -47,8 +47,12 @@ void commandInputLoop(){
 			char * command = strtok(NULL," \t\n");
 			minCount(command);
 		}
-		else if(strcmp(command, "/wc") == 0)
-			printf("wc: %d %d %d\n", totalLines,totalWords,totalLetters);
+		else if(strcmp(command, "/wc") == 0){
+			printf("wc: %d %d %d\n", totalLetters,totalWords,totalLines);
+			for(int i=0; i<w; i++){
+				writeToChild(i,"/wc");
+			}
+		}
 		else if(strcmp(command, "/search") == 0)
 			search();
 

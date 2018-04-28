@@ -16,6 +16,8 @@ extern int resultsCount;
 
 int dirReceived;
 
+extern FILE * myLog;
+
 void sigCheckPipe(int signum){
 	char msgbuf[MSGSIZE+1] = {0};
 
@@ -68,6 +70,10 @@ void sigCheckPipe(int signum){
 			writeToPipe(msgbuf);
 			strcpy(msgbuf,fileName);
 			writeToPipe(msgbuf);
+			if(count != 0)
+				fprintf(myLog,"%d:maxcount:%s:%s:%d\n",(int)time(NULL),word,fileName,count);
+			else
+				fprintf(myLog,"%d:maxcount:%s\n",(int)time(NULL),word);
 			free(word);
 			free(fileName);
 		}
@@ -81,6 +87,10 @@ void sigCheckPipe(int signum){
 			writeToPipe(msgbuf);
 			strcpy(msgbuf,fileName);
 			writeToPipe(msgbuf);
+			if(count != 0)
+				fprintf(myLog,"%d:mincount:%s:%s:%d\n",(int)time(NULL),word,fileName,count);
+			else
+				fprintf(myLog,"%d:mincount:%s\n",(int)time(NULL),word);
 			free(word);
 			free(fileName);
 		}
@@ -104,6 +114,9 @@ void sigCheckPipe(int signum){
 				free(searchTerms[i]);
 			free(searchTerms);
 			writeToPipe("done");
+		}
+		else if(strcmp(msgbuf,"/wc") == 0){
+			fprintf(myLog,"%d:wc:%d:%d:%d\n",(int)time(NULL),totalLetters,totalWords,totalLines);
 		}
 		else {
 			writeToPipe(msgbuf);
@@ -131,6 +144,8 @@ void setupSigActions(){
 }
 
 void searchForWord(char * searchTerm){
+	char msgbuf[MSGSIZE+1];
+	sprintf(msgbuf,"%d:search:%s",(int)time(NULL),searchTerm);
 	for(int i=0; i<dirCount; i++){
 		for(int j=0; j<directories[i].fileCount; j++){
 			PostingListHead * pl = getPostingList(searchTerm,directories[i].files[j].trie);
@@ -138,9 +153,14 @@ void searchForWord(char * searchTerm){
 				PostingListNode * plNode = pl->next;
 				while(plNode != NULL){
 					resultsCount += addSearchResult(plNode->id,&directories[i].files[j],&searchResults);
+					if(strstr(msgbuf, directories[i].files[j].fileName) == NULL){
+						strcat(msgbuf,":");
+						strcat(msgbuf,directories[i].files[j].fileName);
+					}
 					plNode = plNode->next;
 				}
 			}
 		}
 	}
+	fprintf(myLog,"%s\n",msgbuf);
 }
