@@ -1,0 +1,11 @@
+1524926624:search:sometimes:fifo/dir9/text1.txt
+1524926624:search:I:fifo/dir7/text1.txt:fifo/dir8/text1.txt:fifo/dir9/text1.txt:fifo/dir9/text2.txt:fifo/dir9/text3.txt
+1524926624:search:im:fifo/dir7/text1.txt:fifo/dir8/text1.txt
+1524926624:search:'less:fifo/dir7/text1.txt:fifo/dir8/text1.txt
+1524926624:search:G.O.D.:fifo/dir9/text2.txt
+1524926633:maxcount:brobeans
+1524926640:search:im:fifo/dir7/text1.txt:fifo/dir8/text1.txt
+1524926640:search:i'm:fifo/dir7/text1.txt:fifo/dir7/text2.txt:fifo/dir8/text1.txt
+1524926650:maxcount:im:fifo/dir8/text1.txt:5
+1524926657:maxcount:i'm:fifo/dir8/text1.txt:2
+1524926663:wc:502:110:15
