@@ -87,9 +87,9 @@ int countLines(char * file){
     size_t len = 0;
 
     if((stream = fopen(file, "r")) == NULL){
-		printf("Cannot open given docfile.");
-	    exit(4);
-	}
+        printf("Cannot open given docfile.");
+        exit(4);
+    }
 
     int lineCounter = 0;
     while(getline(&line, &len, stream) != -1) {
@@ -111,10 +111,10 @@ void getLines(fileInfo * file){
     char *line = NULL;
     size_t len = 0;
 
-	if((stream = fopen(file->fileName, "r")) == NULL){
-		printf("Cannot open given docfile.");
-	    exit(4);
-	}
+    if((stream = fopen(file->fileName, "r")) == NULL){
+        printf("Cannot open given docfile.");
+        exit(4);
+    }
 
     for(int i=0; i<lineCounter; i++){
         getline(&line, &len, stream);

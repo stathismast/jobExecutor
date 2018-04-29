@@ -8,16 +8,16 @@
 #include "trie.h"
 
 typedef struct fileInfo{
-	char * fileName;
+    char * fileName;
     char ** lines;
     int lineCounter;
     TrieNode * trie;
 } fileInfo;
 
 typedef struct dirInfo{
-	char * dirName;
-	int fileCount;
-	struct fileInfo * files;
+    char * dirName;
+    int fileCount;
+    struct fileInfo * files;
 } dirInfo;
 
 void loadDirInfo();

@@ -12,9 +12,9 @@
 #include <time.h>
 
 typedef struct workerInfo{
-	pid_t pid;
-	int dirCount;
-	char ** directories;
+    pid_t pid;
+    int dirCount;
+    char ** directories;
 } workerInfo;
 
 #define MSGSIZE 512

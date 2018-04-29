@@ -8,9 +8,9 @@
 #define SEARCHINFO_H
 
 typedef struct SearchInfo{
-	int line;
-	fileInfo * file;
-	struct SearchInfo* next;
+    int line;
+    fileInfo * file;
+    struct SearchInfo* next;
 } SearchInfo;
 
 #endif // SEARCHINFO_H
