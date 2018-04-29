@@ -4,8 +4,8 @@ Efstathios-Andreas Mastorakis - sdi1500092
 Second Project for SysPro 2018
 
 Compilation:
-make: To compile the whole program
-make clean: To delete the executable and .o files
+make: To compile the both the jobExecutor and the worker
+make clean: To delete the executables and .o files
 
 You can also choose to compile any of the included files using the Makefiles as
 such: make <directory>/<file>.c
@@ -16,7 +16,7 @@ Brief description of the basic features and funcionality:
 
 INITILIZING THE WORKERS
 When the job executor is run the first id does is set up its signal handlers,
-one for when a child i terminated and another for when a worker sends a
+one for when a child is terminated and another for when a worker sends a
 message to a pipe. Next, the job executor manages the command line arguments
 and decides which directories should be assigned to each worker.
 Then, it creates the named pipes and the workers. After that it opens and tests
@@ -46,8 +46,13 @@ global list. That list only store unique entries to avoid duplicates in when
 printing the results
 
 SCRIPTS
-For the most/least frequenty found scripts, if there are more than one
+For the most/least frequently found scripts, if there are more than one
 most/least found words, only one of them will be printed.
+
+DATASET
+Together with the source code I include 2 datasets. One smaller and one bigger.
+To use either one just add docfileBig.txt or docfileSmall.txt as the docfile
+argument when running the jobExecutor.
 
 Note:
 If a worker is terminated the log file it had created is replaced by that
