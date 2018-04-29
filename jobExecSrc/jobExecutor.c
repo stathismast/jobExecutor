@@ -1,36 +1,40 @@
 #include "commands.h"
 
-pid_t * childPIDs;
-int w;
-int * out;
-int * in;
-char ** outPipes;                    //Output named pipes
-char ** inPipes;                    //Input named pipes
-struct workerInfo * workers;
-int numberOfDirectories;
-char ** allDirectories;
+pid_t * childPIDs;              //Array with the PIDs of each worker
+int w;                          //Number of workers
+int * out;                      //Array with file descriptors of output pipes
+int * in;                       //Array with file descriptors of input pipes
+char ** outPipes;               //Array with names of output pipes
+char ** inPipes;                //Array with names of input pipes
+struct workerInfo * workers;    //Array of structs with info about each worker
+int numberOfDirectories;        //Total number of directories
+char ** allDirectories;         //Array with the names of each directory
 
-int totalLines;
-int totalWords;
-int totalLetters;
+int totalLines;                 //Total number of lines for /wc command
+int totalWords;                 //Total number of words for /wc command
+int totalLetters;               //Total number of lettter for /wc command
 
-int responses;
-int searching;
-int deadline;
+int responses;                  //Number of responses from workers
+                                //Used while waiting for search results
+int searching;                  //Integer used as a boolean. Has a 'true' value
+                                //when we are executing a /search command
+int deadline;                   //Deadline in seconds
 
 int main(int argc, char *argv[]){
     setupSigActions();
 
+    //Initialize global variables
     totalLines = 0;
     totalWords = 0;
     totalLetters = 0;
-
     searching = 0;
 
     //Read and check arguments for validity
     char * docfile;
     if(manageArguments(argc,argv,&docfile,&w) < 0) exit(3);
 
+    //Determine whether we need to reduce the number of worker because there
+    //will be more workers than directories
     numberOfDirectories = getLines(docfile,&allDirectories);
     if(w>numberOfDirectories){
         w = numberOfDirectories;
@@ -55,75 +59,41 @@ int main(int argc, char *argv[]){
     for(int i=0; i<w; i++)
         createReceiver(i);
 
+    //Run a quick test in each pipe
     if(openAndTestPipes() == 0)
         exit(2);
 
     printf("Loading files...\n");
-    //Send directory info to workers
-    char msgbuf[MSGSIZE+1];
-    for(int i=0; i<w; i++){
-        char num[16] = {0};            //String with the number of directories
-        sprintf(num, "%d", workers[i].dirCount);
-        writeToChild(i,num);
-        readFromPipe(i,msgbuf);
-        if(strcmp(num,msgbuf) != 0){
-            printf("Communication error with worker #%d.\n",i);
-            exit(2);
-        }
-        for(int j=0; j<workers[i].dirCount; j++){
-            writeToChild(i,workers[i].directories[j]);
-            readFromPipe(i,msgbuf);
-            if(strcmp(workers[i].directories[j],msgbuf) != 0){
-                printf("Communication error with worker #%d.\n",i);
-                exit(2);
-            }
-        }
-    }
-
+    sendDirectories();
 
     //Receive word count statistics from every worker
-    for(int i=0; i<w; i++){
-        writeToChild(i,"/wc");
-        readFromPipe(i,msgbuf);
-        totalLines += atoi(strtok(msgbuf," "));
-        totalWords += atoi(strtok(NULL," "));
-        totalLetters += atoi(strtok(NULL," "));
-    }
+    //We do this at the start because there is no need to
+    //message the worker every time we want to run the /wc command
+    getWordCount();
 
     printf("All workers up and running.\n");
+
+    //This is the main loop for command input and output
     commandInputLoop();
 
-    //While there is a child that hasnt sent a response
-    // int sum = 0;
-    // while(sum != w){
-    //     sum = 0;
-    //     for(int i=0; i<w; i++){
-    //         sum += responses[i];
-    //     }
-    // }
-    // for(int i=0; i<w; i++) responses[i] = 0;
+    //Inform each worker to exit
+    terminateWorkers();
 
-    signal(SIGCHLD,SIG_DFL);
-    for(int i=0; i<w; i++)
-        kill(workers[i].pid,SIGUSR2);
-
-
+    //Delete pipes
     for(int i=0; i<w; i++)
         unlink(outPipes[i]);
     for(int i=0; i<w; i++)
         unlink(inPipes[i]);
 
-
+    //Deallocate all memory
     freePipeNames(w,outPipes,inPipes);
     free(in);
     free(out);
     free(docfile);
-
     for(int i=0; i<numberOfDirectories; i++){
         free(allDirectories[i]);
     }
     free(allDirectories);
-
     for(int i=0; i<w; i++){
         for(int j=0; j<workers[i].dirCount; j++){
             free(workers[i].directories[j]);
@@ -131,6 +101,6 @@ int main(int argc, char *argv[]){
         free(workers[i].directories);
     }
     free(workers);
-    exit(0);
 
+    exit(0);
 }

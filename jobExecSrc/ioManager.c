@@ -5,6 +5,7 @@ extern struct workerInfo * workers;
 extern int numberOfDirectories;
 extern char ** allDirectories;
 
+//Removes a new line character at the end of the string (if it exists)
 void removeNewLine(char ** str){
     for(int i=0; i<strlen(*str); i++){
         if((*str)[i] == '\n'){
@@ -13,6 +14,7 @@ void removeNewLine(char ** str){
     }
 }
 
+//Counts the total number of lines in the given file
 int countLines(char * file){
     FILE *stream;
     char *line = NULL;
@@ -33,6 +35,7 @@ int countLines(char * file){
     return lineCounter;
 }
 
+//Stores the lines of a given files in an array of string (directory)
 int getLines(char * file, char *** directories){
     int lineCounter = countLines(file);
     *directories = malloc(lineCounter*sizeof(char*));
@@ -58,16 +61,16 @@ int getLines(char * file, char *** directories){
     return lineCounter;
 }
 
+//This function is in charge of deciding the
+//appropriate directories for each worker
 void distributeDirectories(){
+    //Calculate how many directories each worker should have
     for(int i=0; i<w; i++)
         workers[i].dirCount = numberOfDirectories/w;
-
     for(int i=0; i<numberOfDirectories%w; i++)
         workers[i].dirCount++;
 
-    // for(int i=0; i<w; i++)
-    //     printf("%d. %d directorie(s)\n", i, workers[i].dirCount);
-
+    //Store the paths of the direcectories for each worker
     int pos=0;
     for(int i=0; i<w; i++){
         workers[i].directories = malloc(workers[i].dirCount*sizeof(char*));
@@ -76,11 +79,38 @@ void distributeDirectories(){
             strcpy(workers[i].directories[j], allDirectories[pos]);
             pos++;
         }
-        // printf("Directories for %d:\n",i);
-        // for(int j=0; j<workers[i].dirCount; j++){
-        //     printf("\t%s\n",workers[i].directories[j]);
-        // }
     }
+}
+
+
+//Send directory info to workers
+void sendDirectories(){
+    char msgbuf[MSGSIZE+1];
+    for(int i=0; i<w; i++){
+        char num[16] = {0};            //String with the number of directories
+        sprintf(num, "%d", workers[i].dirCount);
+        writeToChild(i,num);
+        readFromPipe(i,msgbuf);
+        if(strcmp(num,msgbuf) != 0){
+            printf("Communication error with worker #%d.\n",i);
+            exit(2);
+        }
+        for(int j=0; j<workers[i].dirCount; j++){
+            writeToChild(i,workers[i].directories[j]);
+            readFromPipe(i,msgbuf);
+            if(strcmp(workers[i].directories[j],msgbuf) != 0){
+                printf("Communication error with worker #%d.\n",i);
+                exit(2);
+            }
+        }
+    }
+}
+
+//Signal each worker to deallocate memory and exit
+void terminateWorkers(){
+    signal(SIGCHLD,SIG_DFL);    //Reset signal handler for SIGCHLD
+    for(int i=0; i<w; i++)
+        kill(workers[i].pid,SIGUSR2);
 }
 
 //Manages arguments given on execution and checks for errors
@@ -97,34 +127,33 @@ int manageArguments(int argc, char *argv[], char ** docfile, int * numWorkers){
         return -1;
     }
 
-    //Check for each argument (this part of the code is based on an
-    //argument manager I developed for a previous assignment)
     for(int i=1; i<argc; i++)
-        if(strcmp(argv[i],"-d") == 0){                //If '-d' is given
-            if(argc > i+1 && !gotInputFile){        //If there is another argument after this
-                //Allocate space for the file name
+        //If -d is given
+        if(strcmp(argv[i],"-d") == 0){
+            if(argc > i+1 && !gotInputFile){
                 (*docfile) = malloc((strlen(argv[i+1])+1)*sizeof(char));
-                strcpy(*docfile,argv[i+1]);            //Store file name
-                gotInputFile = 1;                    //Set value to '1' to denote that we now have recieved an input file name
-                i++;                                //Increase 'i' because we consumed the following argument as well
+                strcpy(*docfile,argv[i+1]);
+                gotInputFile = 1;
+                i++;
             }
-            else{                                    //More than one '-d' given or there is no argument after '-d'
+            else{
                 argumentError = 1;
                 break;
             }
         }
-        else if(strcmp(argv[i],"-w") == 0){                            //If '-w' is given
-        if(argc > i+1){                                                //If there is another argument after this
-                *numWorkers = atoi(argv[i+1]);                        //Store value of 'numWorkers'
-                if(*numWorkers < 1) {invalidWArgument = 1; break;}    //If '-w' is 0 or negative or not a numeral
-                i++;                                                //Increase 'i' because we consumed the following argument as well
+        //If -w is given
+        else if(strcmp(argv[i],"-w") == 0){
+        if(argc > i+1){
+                *numWorkers = atoi(argv[i+1]);
+                if(*numWorkers < 1) {invalidWArgument = 1; break;}
+                i++;
             }
-            else{                                                    //There is no argument after '-w'
+            else{
                 argumentError = 1;
                 break;
             }
         }
-        else{    //Invalid argument given
+        else{
             argumentError = 1;
         }
 

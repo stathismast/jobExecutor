@@ -57,7 +57,11 @@ void commandInputLoop(){
             minCount(command);
         }
         else if(strcmp(command, "/wc") == 0){
+            //We have already collected the counts from each worker
+            //So we just print the out
             printf("wc: %d %d %d\n", totalLines,totalWords,totalLetters);
+
+            //Inform workers so they can add the /wc command in their logs
             for(int i=0; i<w; i++){
                 writeToChild(i,"/wc");
             }
@@ -71,74 +75,120 @@ void commandInputLoop(){
     }
 }
 
+//Function in charge of executing the /search command
 void search(){
     char msgbuf[MSGSIZE+1];
     int termCount = 0;
-    char * searchTerms[10] = {NULL};//Array for the first 10 search terms given
-    char * term;                    //Temporary 'string' used to store search terms
+    char * searchTerms[12] = {NULL};
+    char * term;
 
-    for(int i=0; i<10; i++)                                //Read and store every search term
-        if((term = strtok(NULL, " \t\n")) != NULL){        //Check the token/term
-            searchTerms[i] = malloc(strlen(term)+1);    //Allocate space for it
-            memcpy(searchTerms[i], term, strlen(term));    //Store it
-            searchTerms[i][strlen(term)] = 0;            //Add a null character at the end of the string
+    //Read and store every search term
+    for(int i=0; i<12; i++)
+        if((term = strtok(NULL, " \t\n")) != NULL){
+            searchTerms[i] = malloc(strlen(term)+1);
+            memcpy(searchTerms[i], term, strlen(term));
+            searchTerms[i][strlen(term)] = 0;
             termCount++;
         } else break;
 
-    sprintf(msgbuf,"%d",termCount);
+    //Store the given deadline
+    int pos = 0;
+    while(pos<termCount){
+        if(strcmp(searchTerms[pos],"-d") == 0) break;
+        pos++;
+    }
+    if(pos != termCount-2){
+        printf("Error: Invalid /search command\n");
+        for(int i=0; i<termCount; i++)
+            free(searchTerms[i]);
+        return;
+    }
+    int dl = atoi(searchTerms[termCount-1]);
+    if(dl <= 0){
+        printf("Error: Invalid /search command: -d argument must be a number greater than 0\n");
+        for(int i=0; i<termCount; i++)
+            free(searchTerms[i]);
+        return;
+    }
+
+    //Inform workers that we are about to run a search command
     for(int i=0; i<w; i++)
         writeToChild(i,"/search");
+
+    //Send the total number of search terms to the workers
+    sprintf(msgbuf,"%d",termCount-2);   //String with the number of search terms
     for(int i=0; i<w; i++)
         writeToPipe(i,msgbuf);
+
+    //Send every search term to each worker
     for(int i=0; i<w; i++)
-        for(int j=0; j<termCount; j++)
+        for(int j=0; j<termCount-2; j++)
             writeToPipe(i,searchTerms[j]);
 
-    deadline = time(NULL) + 2;
+    //Calculate deadline
+    deadline = time(NULL) + dl;
     responses = 0;
     searching = 1;
+    //Sleep until EITHER:
+    //a. all the workers have responed with their results OR
+    //b. we have reached the deadline
     while(responses != w && deadline > time(NULL))
         sleep(deadline - time(NULL));
     searching = 0;
 
+    //If a worker is still searching this signal informs them to stop
     for(int i=0; i<w; i++)
         kill(workers[i].pid,SIGCHLD);
 
+    //Send a message to workers to confirm that they have stopped searching
     for(int i=0; i<w; i++)
         writeToPipe(i,"deadline");
+    //Confirmation from workers
     for(int i=0; i<w; i++)
         readFromPipe(i,msgbuf);
+
     for(int i=0; i<termCount; i++)
         free(searchTerms[i]);
     printf("%d out of %d workers responded.\n", responses, w);
 }
 
+//Function in charge of executing the /maxcount command
 void maxCount(char * keyword){
     char msgbuf[MSGSIZE+1];
     int * counts = malloc(w*sizeof(int));
     char ** fileNames = malloc(w*sizeof(char*));
+
+    //Inform the workers that we are about to execute a maxcount command
     for(int i=0; i<w; i++){
         writeToChild(i,"/maxcount");
         writeToPipe(i,keyword);    //Send message to worker without signaling
+                       //No need to signal because the worker is expecting it
     }
+
     //Store the max count from every worker
     for(int i=0; i<w; i++){
         readFromPipe(i,msgbuf);
         counts[i] = atoi(msgbuf);
     }
+
     //Store the file that has the max count from every worker
     for(int i=0; i<w; i++){
         readFromPipe(i,msgbuf);
         fileNames[i] = malloc(strlen(msgbuf)+1);
         strcpy(fileNames[i],msgbuf);
     }
+
     //Find the overall max count
     int max = 0;
     for(int i=1; i<w; i++){
         if(counts[i] > counts[max])
             max = i;
     }
-    printf("maxcount for %s: %d: %s\n", keyword, counts[max], fileNames[max]);
+
+    //Print out the result
+    if(counts[max] == 0)
+        printf("'%s' does not exist in the given dataset\n", keyword);
+    else printf("'%s' appears %d times in '%s'\n", keyword, counts[max], fileNames[max]);
     free(counts);
     for(int i=0; i<w; i++){
         free(fileNames[i]);
@@ -146,6 +196,7 @@ void maxCount(char * keyword){
     free(fileNames);
 }
 
+//Function in charge of executing the /mincount command
 void minCount(char * keyword){
     char msgbuf[MSGSIZE+1];
     int * counts = malloc(w*sizeof(int));
@@ -153,7 +204,9 @@ void minCount(char * keyword){
     for(int i=0; i<w; i++){
         writeToChild(i,"/mincount");
         writeToPipe(i,keyword);    //Send message to worker without signaling
+                       //No need to signal because the worker is expecting it
     }
+
     //Store the min count from every worker
     for(int i=0; i<w; i++){
         readFromPipe(i,msgbuf);
@@ -176,10 +229,25 @@ void minCount(char * keyword){
         else if(counts[i] < counts[min] && counts[i] > 0)
             min = i;
     }
-    printf("mincount for %s: %d: %s\n", keyword, counts[min], fileNames[min]);
+
+    //Print out the result
+    if(counts[min] == 0)
+        printf("'%s' does not exist in the given dataset\n", keyword);
+    else printf("%s appears %d times in '%s'\n", keyword, counts[min], fileNames[min]);
     free(counts);
     for(int i=0; i<w; i++){
         free(fileNames[i]);
     }
     free(fileNames);
+}
+
+void getWordCount(){
+    char msgbuf[MSGSIZE+1];
+    for(int i=0; i<w; i++){
+        writeToChild(i,"/wc");
+        readFromPipe(i,msgbuf);
+        totalLines += atoi(strtok(msgbuf," "));
+        totalWords += atoi(strtok(NULL," "));
+        totalLetters += atoi(strtok(NULL," "));
+    }
 }
