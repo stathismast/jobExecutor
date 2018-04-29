@@ -110,7 +110,6 @@ void sigCheckPipe(int signum){
 			for(int i=0; i<termCount; i++)
 				if(!deadline) searchForWord(searchTerms[i]);
 				else break;
-			sleep(2*atoi(id));
 			if(!deadline){
 				writeToPipe("deadline");
 				kill(getppid(),SIGUSR1);	//Inform the parent that we responded
