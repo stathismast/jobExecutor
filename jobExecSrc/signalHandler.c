@@ -8,7 +8,7 @@ extern int * responses;
 void sigChild(int signum){
 	for(int i=0; i<w; i++){
 		if(kill(workers[i].pid,0) != 0){
-			printf("#%d child terminated.\n",i);
+			printf("\n#%d child terminated.\n",i);
 			reCreateReceiver(i);
 		}
 	}

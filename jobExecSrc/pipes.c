@@ -40,7 +40,7 @@ void readFromPipe(int id, char * message){
 }
 
 void createNamedPipe(char * pipeName){
-	unlink(pipeName);		//Delete named pipe if it already exists
+	unlink(pipeName);
 	if(mkfifo(pipeName, 0600) == -1){
 		perror("sender: mkfifo");
 		exit(6);
@@ -110,10 +110,13 @@ void reCreateReceiver(int id){
 	if(pid != 0){
 		workers[id].pid = pid;	//Store child pid in global array
 		printf("New child created with pid: %d\n",(int)pid);
+		close(in[id]);
+		close(out[id]);
 		createNamedPipe(outPipes[id]);
 		createNamedPipe(inPipes[id]);
 		out[id] = openForWriting(outPipes[id]);
 		in[id] = openForReading(inPipes[id]);
+		usleep(10000);
 		writeToChild(id,"/test");
 		char msgbuf[MSGSIZE+1] = {0};
 		readFromPipe(id,msgbuf);
@@ -121,6 +124,25 @@ void reCreateReceiver(int id){
 			printf("Communication error with worker #%d.\n",id);
 			exit(2);
 		}
+		char num[16] = {0};			//String with the number of directories
+		sprintf(num, "%d", workers[id].dirCount);
+		writeToChild(id,num);
+		readFromPipe(id,msgbuf);
+		if(strcmp(num,msgbuf) != 0){
+			printf("Communication error with worker #%d.\n",id);
+			exit(2);
+		}
+		for(int j=0; j<workers[id].dirCount; j++){
+			writeToChild(id,workers[id].directories[j]);
+			readFromPipe(id,msgbuf);
+			if(strcmp(workers[id].directories[j],msgbuf) != 0){
+				printf("Communication error with worker #%d.\n",id);
+				exit(2);
+			}
+		}
+		writeToChild(id,"/wc");
+		readFromPipe(id,msgbuf);
+		printf("Worker #%d back up and running.\n> ",id);
 		return;
 	}
 	char * buff[5];

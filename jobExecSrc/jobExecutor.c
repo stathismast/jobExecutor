@@ -20,6 +20,7 @@ int * responses;
 
 int main(int argc, char *argv[]){
 	setupSigActions();
+	unlink("log/*");
 
 	totalLines = 0;
 	totalWords = 0;

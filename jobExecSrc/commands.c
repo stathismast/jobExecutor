@@ -10,7 +10,10 @@ extern int w;
 char * getCommand(){
 	char * command = NULL;
 	size_t size;
-	if(getline(&command, &size, stdin) == -1) return NULL;
+	while(getline(&command, &size, stdin) == -1){
+	    clearerr(stdin);
+		continue;
+	}
 	return command;
 }
 
@@ -29,6 +32,7 @@ void commandInputLoop(){
 	while(1){
 		printf("> ");
 		command = getCommand();
+		if(command == NULL) continue;
 		if(*command == '\n') { free(command); continue; }
 
 		command = strtok(command," \t\n");
