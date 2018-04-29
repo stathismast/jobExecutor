@@ -58,6 +58,7 @@ int main(int argc, char *argv[]){
 	if(openAndTestPipes() == 0)
 		exit(2);
 
+	printf("Loading files...\n");
 	//Send directory info to workers
 	char msgbuf[MSGSIZE+1];
 	for(int i=0; i<w; i++){
@@ -79,7 +80,6 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-	//nonBlockingInputPipes();
 
 	//Receive word count statistics from every worker
 	for(int i=0; i<w; i++){
@@ -90,6 +90,7 @@ int main(int argc, char *argv[]){
 		totalLetters += atoi(strtok(NULL," "));
 	}
 
+	printf("All workers up and running.\n");
 	commandInputLoop();
 
 	//While there is a child that hasnt sent a response

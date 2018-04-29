@@ -1,0 +1,9 @@
+dataset/smallDir0
+dataset/smallDir1
+dataset/smallDir2
+dataset/smallDir3
+dataset/smallDir4
+dataset/smallDir5
+dataset/smallDir6
+dataset/smallDir7
+dataset/smallDir8

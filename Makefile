@@ -15,7 +15,7 @@ run:
 	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c workersSrc/trie.c workersSrc/searchInfo.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c jobExecSrc/commands.c -lm
 	@echo -----------------------------------------------------------------;
-	@./jobExecutor -w $(workers) -d docfile.txt;
+	@./jobExecutor -w $(workers) -d docfileSmall.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;
@@ -26,7 +26,7 @@ valgrind:
 	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c workersSrc/trie.c workersSrc/searchInfo.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c jobExecSrc/commands.c -lm
 	@echo -----------------------------------------------------------------;
-	@valgrind --leak-check=full --trace-children=yes ./jobExecutor -w $(workers) -d docfile.txt;
+	@valgrind --leak-check=full --trace-children=yes ./jobExecutor -w $(workers) -d docfileSmall.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;
@@ -37,7 +37,7 @@ verbose:
 	@gcc -g -o worker workersSrc/worker.c workersSrc/pipes.c workersSrc/signalHandler.c workersSrc/dirInfo.c workersSrc/trie.c workersSrc/searchInfo.c;
 	@gcc -g -o jobExecutor jobExecSrc/jobExecutor.c jobExecSrc/pipes.c jobExecSrc/ioManager.c jobExecSrc/signalHandler.c jobExecSrc/commands.c -lm
 	@echo -----------------------------------------------------------------;
-	@valgrind --leak-check=full --track-origins=yes -v ./jobExecutor -w $(workers) -d docfile.txt;
+	@valgrind --leak-check=full --track-origins=yes -v ./jobExecutor -w $(workers) -d docfileSmall.txt;
 	@echo -----------------------------------------------------------------;
 	@echo "Cleaning up..."
 	@rm -f worker jobExecutor; rm -f /tmp/in* /tmp/out*;

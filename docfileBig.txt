@@ -1,0 +1,9 @@
+dataset/bigDir0
+dataset/bigDir1
+dataset/bigDir2
+dataset/bigDir3
+dataset/bigDir4
+dataset/bigDir5
+dataset/bigDir6
+dataset/bigDir7
+dataset/bigDir8

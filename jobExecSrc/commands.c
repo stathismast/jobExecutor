@@ -57,7 +57,7 @@ void commandInputLoop(){
 			minCount(command);
 		}
 		else if(strcmp(command, "/wc") == 0){
-			printf("wc: %d %d %d\n", totalLetters,totalWords,totalLines);
+			printf("wc: %d %d %d\n", totalLines,totalWords,totalLetters);
 			for(int i=0; i<w; i++){
 				writeToChild(i,"/wc");
 			}
@@ -110,6 +110,7 @@ void search(){
 		readFromPipe(i,msgbuf);
 	for(int i=0; i<termCount; i++)
 		free(searchTerms[i]);
+	printf("%d out of %d workers responded.\n", responses, w);
 }
 
 void maxCount(char * keyword){

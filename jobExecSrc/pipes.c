@@ -69,7 +69,6 @@ int openAndTestPipes(){
 			return 0;
 		}
 	}
-	printf("All workers up and running.\n");
 	return 1;
 }
 

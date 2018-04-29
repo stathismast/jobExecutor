@@ -19,8 +19,9 @@ int dirReceived;
 
 extern FILE * myLog;
 
+char msgbuf[MSGSIZE+1] = {0};
+
 void sigCheckPipe(int signum){
-	char msgbuf[MSGSIZE+1] = {0};
 
 	readFromPipe(msgbuf);
 	// printf("Worker #%d: Message Received: -%s-\n", atoi(id), msgbuf);
@@ -43,8 +44,8 @@ void sigCheckPipe(int signum){
 		dirReceived++;
 		if(dirReceived == dirCount){	//Once we've received evert directory
 			loadDirInfo();
-		    printf("I'm worker #%d and these are my directories:\n",atoi(id));
-			printDirInfo();
+		    // printf("I'm worker #%d and these are my directories:\n",atoi(id));
+			// printDirInfo();
 			stage++;
 		}
 		writeToPipe(msgbuf);
@@ -128,7 +129,7 @@ void sigCheckPipe(int signum){
 			writeToPipe("done");
 		}
 		else if(strcmp(msgbuf,"/wc") == 0){
-			fprintf(myLog,"%d:wc:%d:%d:%d\n",(int)time(NULL),totalLetters,totalWords,totalLines);
+			fprintf(myLog,"%d:wc:%d:%d:%d\n",(int)time(NULL),totalLines,totalWords,totalLetters);
 		}
 		else {
 			writeToPipe(msgbuf);
@@ -166,7 +167,6 @@ void setupSigActions(){
 }
 
 void searchForWord(char * searchTerm){
-	char msgbuf[MSGSIZE+1];
 	sprintf(msgbuf,"%d:search:%s",(int)time(NULL),searchTerm);
 	for(int i=0; i<dirCount; i++){
 		for(int j=0; j<directories[i].fileCount; j++){
