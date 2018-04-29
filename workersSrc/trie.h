@@ -1,5 +1,6 @@
-#ifndef TRIENODE_H
-#define TRIENODE_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 //Contains the term frequency (count) for a given document id as well as a pointer to the next posting list node
 typedef struct PostingListNode{
@@ -23,7 +24,6 @@ typedef struct TrieNode{
     PostingListHead * postingList;    //Posting list for the word ending in this letter
 } TrieNode;
 
-#endif //POSTINGLIST_H
 
 PostingListHead * newPostingListHead();
 PostingListNode * newPostingListNode(int id);

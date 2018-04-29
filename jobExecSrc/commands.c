@@ -233,7 +233,7 @@ void minCount(char * keyword){
     //Print out the result
     if(counts[min] == 0)
         printf("'%s' does not exist in the given dataset\n", keyword);
-    else printf("%s appears %d times in '%s'\n", keyword, counts[min], fileNames[min]);
+    else printf("'%s' appears %d times in '%s'\n", keyword, counts[min], fileNames[min]);
     free(counts);
     for(int i=0; i<w; i++){
         free(fileNames[i]);

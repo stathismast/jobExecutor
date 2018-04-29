@@ -1,16 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "dirInfo.h"
 
 #ifndef SEARCHINFO_H
 #define SEARCHINFO_H
 
 typedef struct SearchInfo{
-    int line;
-    fileInfo * file;
-    struct SearchInfo* next;
+    int line;                   //Number of line in which a word was found
+    fileInfo * file;            //Pointer to the file the word was found
+    struct SearchInfo* next;    //Next element of the list
 } SearchInfo;
 
 #endif // SEARCHINFO_H

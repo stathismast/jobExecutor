@@ -1,27 +1,32 @@
-#include "signalHandler.h"
+#include "commands.h"
 
-int in;
-int out;
-char * inPipe;
-char * outPipe;
-char * id;
+int in;                     //Input pipe file descriptor
+int out;                    //Output pipe file descriptor
+char * inPipe;              //Input pipe name
+char * outPipe;             //Output pipe name
+char * id;                  //Worker id
 
-int dirCount;
-dirInfo * directories;
+int dirCount;               //Number of directories
+dirInfo * directories;      //Array with information about each directory
 
-int totalLines;
-int totalWords;
-int totalLetters;
+int totalLines;             //Total number of lines for /wc
+int totalWords;             //Total number of words for /wc
+int totalLetters;           //Total number of letters for /wc
 
-int stage;
-int done;
+int stage;                  //Stage indicator, used to differentiate the stages
+                            //of the workers' initialization
+int done;                   //Integer ised as a boolean, has true value when
+                            //the worker has to terminate
 
-SearchInfo * searchResults;
-int resultsCount;
-int deadline;
+SearchInfo * searchResults; //List of search results
+int resultsCount;           //Number of search results
+int deadline;               //Integer used as a boolean
 
-FILE * myLog;
+int commandID;              //Integer indicating which command we need to run
 
+FILE * myLog;               //Log file
+
+//Function to manage given argc & argv arguments
 void manageArguments(int argc, char *argv[]){
     inPipe = malloc(strlen(argv[1])+1);
     strcpy(inPipe,argv[1]);
@@ -33,27 +38,35 @@ void manageArguments(int argc, char *argv[]){
 
 int main(int argc, char *argv[]){
     setupSigActions();
+
     manageArguments(argc,argv);
     openPipes();
 
+    //Initialize global variable values
     totalLines = 0;
     totalWords = 0;
     totalLetters = 0;
-
     deadline = 0;
+    done = 0;
+    stage = 1;
+    commandID = 0;
 
+    //Create and open a log file
     char * logFileName = malloc(strlen(id)+16);
     sprintf(logFileName,"log/Worker_%s.log",id);
     myLog = fopen(logFileName, "w");
 
-    done = 0;
-    stage = 1;
-
-
+    //Pause until we get a signal from the job executor
+    //Then depending in the command ID run the required command
     while(!done){
         pause();
+        if(commandID == 1) maxcount();
+        else if(commandID == 2) mincount();
+        else if(commandID == 3) search();
+        commandID = 0;
     }
 
+    //When we're done, close log file and deallocate all the used memory
     fclose(myLog);
     free(logFileName);
     free(inPipe);

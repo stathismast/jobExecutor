@@ -11,8 +11,9 @@ extern int deadline;
 void sigChild(int signum){
     for(int i=0; i<w; i++){
         if(kill(workers[i].pid,0) != 0){
-            printf("\n#%d child terminated.\n",i);
+            printf("\n#%d worker terminated.\n",i);
             reCreateReceiver(i);
+            if(searching) responses++;
         }
     }
 }
@@ -27,7 +28,6 @@ void sigCheckPipe(int signum){
         nonBlockingInputPipes();
         for(int i=0; i<w; i++){
             if(read(in[i], msgbuf, MSGSIZE+1) > 0){
-                printf("Message from child #%d: -%s-\n",i,msgbuf);
                 if(time(NULL)<=deadline) writeToPipe(i,"yes");
                 else writeToPipe(i,"no");
                 responses++;

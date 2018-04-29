@@ -96,7 +96,7 @@ void createReceiver(int id){
     pid_t pid = fork();
     if(pid != 0){
         workers[id].pid = pid;    //Store child pid in global array
-        printf("New child created with pid: %d\n",(int)pid);
+        // printf("New child created with pid: %d\n",(int)pid);
         return;
     }
     //Create the proper arguments and exec
@@ -121,7 +121,6 @@ void reCreateReceiver(int id){
     pid_t pid = fork();
     if(pid != 0){
         workers[id].pid = pid;    //Store child pid in global array
-        printf("New child created with pid: %d\n",(int)pid);
         //Close previous pipe file descriptors
         close(in[id]);
         close(out[id]);

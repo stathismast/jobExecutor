@@ -15,6 +15,8 @@ extern SearchInfo * searchResults;
 extern int resultsCount;
 extern int deadline;
 
+extern int commandID;
+
 int dirReceived;
 
 extern FILE * myLog;
@@ -24,13 +26,15 @@ char msgbuf[MSGSIZE+1] = {0};
 void sigCheckPipe(int signum){
 
     readFromPipe(msgbuf);
-    // printf("Worker #%d: Message Received: -%s-\n", atoi(id), msgbuf);
 
+    //If this is part of a test respond with the same message
     if(strcmp(msgbuf,"/test") == 0){
         writeToPipe(msgbuf);
         return;
     }
 
+    //Stage 1 is where the worker receives a number, which will be the
+    //total number of directories it will be in charge of
     if(stage == 1){
         dirCount = atoi(msgbuf);
         directories = malloc(dirCount*sizeof(dirInfo));
@@ -38,18 +42,19 @@ void sigCheckPipe(int signum){
         dirReceived = 0;
         writeToPipe(msgbuf);
     }
+    //Stage 2 is where the worker receives the names of each directory
+    //And loads each file to memory
     else if(stage == 2){
         directories[dirReceived].dirName = malloc(strlen(msgbuf)+1);
         strcpy(directories[dirReceived].dirName,msgbuf);
         dirReceived++;
-        if(dirReceived == dirCount){    //Once we've received evert directory
+        if(dirReceived == dirCount){    //Once we've received every directory
             loadDirInfo();
-            // printf("I'm worker #%d and these are my directories:\n",atoi(id));
-            // printDirInfo();
             stage++;
         }
         writeToPipe(msgbuf);
     }
+    //Stage 3 is where the worker send its /wc statistics to the jobExecutor
     else if(stage == 3){
         if(strcmp(msgbuf,"/wc") == 0){
             char response[MSGSIZE+1] = {0};
@@ -61,79 +66,19 @@ void sigCheckPipe(int signum){
             printf("Worker error: Expected message to calculate word count.\n");
         }
     }
+    //Stage 4 is where the worker is waiting for a command from the jobExecutor
     else if(stage == 4){
         if(strcmp(msgbuf,"/maxcount") == 0){
-            readFromPipe(msgbuf);
-            char * word = malloc(strlen(msgbuf)+1);
-            strcpy(word,msgbuf);
-            char * fileName;
-            int count = getMaxWordCount(word,&fileName);
-            sprintf(msgbuf, "%d", count);
-            writeToPipe(msgbuf);
-            strcpy(msgbuf,fileName);
-            writeToPipe(msgbuf);
-            if(count != 0)
-                fprintf(myLog,"%d:maxcount:%s:%s:%d\n",(int)time(NULL),word,fileName,count);
-            else
-                fprintf(myLog,"%d:maxcount:%s\n",(int)time(NULL),word);
-            free(word);
-            free(fileName);
+            commandID = 1;
         }
         else if(strcmp(msgbuf,"/mincount") == 0){
-            readFromPipe(msgbuf);
-            char * word = malloc(strlen(msgbuf)+1);
-            strcpy(word,msgbuf);
-            char * fileName;
-            int count = getMinWordCount(word,&fileName);
-            sprintf(msgbuf, "%d", count);
-            writeToPipe(msgbuf);
-            strcpy(msgbuf,fileName);
-            writeToPipe(msgbuf);
-            if(count != 0)
-                fprintf(myLog,"%d:mincount:%s:%s:%d\n",(int)time(NULL),word,fileName,count);
-            else
-                fprintf(myLog,"%d:mincount:%s\n",(int)time(NULL),word);
-            free(word);
-            free(fileName);
+            commandID = 2;
         }
         else if(strcmp(msgbuf,"/search") == 0){
-            deadline = 0;
-            readFromPipe(msgbuf);
-            int termCount = atoi(msgbuf);
-            char ** searchTerms = malloc(termCount*sizeof(char*));
-            for(int i=0; i<termCount; i++){
-                readFromPipe(msgbuf);
-                searchTerms[i] = malloc(strlen(msgbuf)+1);
-                strcpy(searchTerms[i],msgbuf);
-            }
-            searchResults = NULL;
-            resultsCount = 0;
-            for(int i=0; i<termCount; i++)
-                if(!deadline) searchForWord(searchTerms[i]);
-                else break;
-            if(!deadline){
-                writeToPipe("deadline");
-                kill(getppid(),SIGUSR1);    //Inform the parent that we responded
-                readFromPipe(msgbuf);
-                if(strcmp(msgbuf,"yes") == 0){
-                    printf("Results from #%s: %d\n",id,resultsCount);
-                    printSearchResults(searchResults);
-                }
-            }
-            if(!deadline) pause();
-            freeSearchInfo(searchResults);
-            for(int i=0; i<termCount; i++)
-                free(searchTerms[i]);
-            free(searchTerms);
-            readFromPipe(msgbuf);
-            writeToPipe("done");
+            commandID = 3;
         }
         else if(strcmp(msgbuf,"/wc") == 0){
             fprintf(myLog,"%d:wc:%d:%d:%d\n",(int)time(NULL),totalLines,totalWords,totalLetters);
-        }
-        else {
-            writeToPipe(msgbuf);
-            kill(getppid(),SIGUSR1);    //Inform the parent that we responded
         }
     }
 }

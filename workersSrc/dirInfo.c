@@ -7,27 +7,29 @@ extern int totalLines;
 extern int totalWords;
 extern int totalLetters;
 
+//Load inforamtion for each directory
 void loadDirInfo(){
     for(int i=0; i<dirCount; i++)
         getFiles(&directories[i]);
 }
 
+//Print out the contents of each directory. Used for debugging
 void printDirInfo(){
     for(int i=0; i<dirCount; i++)
         printDirContents(&directories[i]);
 }
 
+//Print out the contents of a directory
 void printDirContents(dirInfo * directory){
     printf("\t-%s-\n",directory->dirName);
     for(int i=0; i<directory->fileCount; i++){
         printf("\t\t-%s-\n", directory->files[i].fileName);
         for(int j=0; j<directory->files[i].lineCounter; j++)
             printf("\t\t\t-%s-\n", directory->files[i].lines[j]);
-
     }
-
 }
 
+//Count the number of files in the given directory
 int countFiles(char * directory){
     DIR *dir;
     struct dirent *ent;
@@ -73,6 +75,7 @@ void getFiles(struct dirInfo * directory){
     closedir (dir);
 }
 
+//Remove a new line character from the end of a string
 void removeNewLine(char ** str){
     for(int i=0; i<strlen(*str); i++){
         if((*str)[i] == '\n'){
@@ -81,6 +84,7 @@ void removeNewLine(char ** str){
     }
 }
 
+//Count the number of lines in a given file
 int countLines(char * file){
     FILE *stream;
     char *line = NULL;
@@ -101,6 +105,7 @@ int countLines(char * file){
     return lineCounter;
 }
 
+//Store the lines of a given file
 void getLines(fileInfo * file){
     int lineCounter = countLines(file->fileName);
     file->lines = malloc(lineCounter*sizeof(char*));
@@ -129,6 +134,7 @@ void getLines(fileInfo * file){
     file->lineCounter = lineCounter;
 }
 
+//Add the lines from a file to its trie
 void addLinesToTrie(fileInfo * file){
     int wordCount;
     file->trie = NULL;
@@ -138,6 +144,7 @@ void addLinesToTrie(fileInfo * file){
     }
 }
 
+//Get the total number of times a word is in a file
 int getWordCount(char * word, fileInfo * file){
     PostingListHead * pl = getPostingList(word,file->trie);
     int count;
@@ -148,6 +155,7 @@ int getWordCount(char * word, fileInfo * file){
     return count;
 }
 
+//Get file that has the given word the most times
 int getMaxWordCount(char * word,  char ** fileName){
     int maxCount = 0;
     *fileName = malloc(strlen(word)+49);
@@ -175,6 +183,7 @@ int getMaxWordCount(char * word,  char ** fileName){
         return maxCount;
 }
 
+//Get file that has the given word the least times
 int getMinWordCount(char * word,  char ** fileName){
     int found = 0;
     int minCount = 0;

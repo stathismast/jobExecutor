@@ -1,23 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
 #include <dirent.h>
-
 #include "trie.h"
 
 typedef struct fileInfo{
-    char * fileName;
-    char ** lines;
-    int lineCounter;
-    TrieNode * trie;
+    char * fileName;            //Name of file
+    char ** lines;              //Array with all the lines
+    int lineCounter;            //Number of lines
+    TrieNode * trie;            //Trie for this file
 } fileInfo;
 
 typedef struct dirInfo{
-    char * dirName;
-    int fileCount;
-    struct fileInfo * files;
+    char * dirName;             //Name of directory
+    int fileCount;              //Number of files in directory
+    struct fileInfo * files;    //Array with information about each file
 } dirInfo;
 
 void loadDirInfo();

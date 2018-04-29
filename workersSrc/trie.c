@@ -1,9 +1,7 @@
 #include "trie.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 //Trie and posting list implementation
+//Same as the previous assignment
 
 //Allocate space for a new trie node and initialize it
 TrieNode * newTrieNode(char letter){
