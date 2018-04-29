@@ -1,9 +1,11 @@
 #include "signalHandler.h"
 
 extern struct workerInfo * workers;
-extern int w;
 extern int * in;
-extern int * responses;
+extern int w;
+extern int responses;
+extern int searching;
+extern int deadline;
 
 void sigChild(int signum){
 	for(int i=0; i<w; i++){
@@ -17,11 +19,18 @@ void sigChild(int signum){
 //Check every pipe
 void sigCheckPipe(int signum){
 	char msgbuf[MSGSIZE+1] = {0};
-	for(int i=0; i<w; i++){
-		if(read(in[i], msgbuf, MSGSIZE+1) > 0){
-			printf("Message from child #%d: -%s-\n",i,msgbuf);
-			responses[i] = 1;
+	if(searching){
+		nonBlockingInputPipes();
+		for(int i=0; i<w; i++){
+			if(read(in[i], msgbuf, MSGSIZE+1) > 0){
+				printf("Message from child #%d: -%s-\n",i,msgbuf);
+				if(time(NULL)<=deadline) writeToPipe(i,"yes");
+				else writeToPipe(i,"no");
+				responses++;
+				if(responses == w) searching = 0;
+			}
 		}
+		blockingInputPipes();
 	}
 }
 

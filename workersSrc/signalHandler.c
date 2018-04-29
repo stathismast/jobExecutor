@@ -13,6 +13,7 @@ extern int totalLetters;
 
 extern SearchInfo * searchResults;
 extern int resultsCount;
+extern int deadline;
 
 int dirReceived;
 
@@ -95,6 +96,7 @@ void sigCheckPipe(int signum){
 			free(fileName);
 		}
 		else if(strcmp(msgbuf,"/search") == 0){
+			deadline = 0;
 			readFromPipe(msgbuf);
 			int termCount = atoi(msgbuf);
 			char ** searchTerms = malloc(termCount*sizeof(char*));
@@ -106,13 +108,24 @@ void sigCheckPipe(int signum){
 			searchResults = NULL;
 			resultsCount = 0;
 			for(int i=0; i<termCount; i++)
-				searchForWord(searchTerms[i]);
-			printf("Results from #%s: %d\n",id,resultsCount);
-			printSearchResults(searchResults);
+				if(!deadline) searchForWord(searchTerms[i]);
+				else break;
+			sleep(2*atoi(id));
+			if(!deadline){
+				writeToPipe("deadline");
+				kill(getppid(),SIGUSR1);	//Inform the parent that we responded
+				readFromPipe(msgbuf);
+				if(strcmp(msgbuf,"yes") == 0){
+					printf("Results from #%s: %d\n",id,resultsCount);
+					printSearchResults(searchResults);
+				}
+			}
+			if(!deadline) pause();
 			freeSearchInfo(searchResults);
 			for(int i=0; i<termCount; i++)
 				free(searchTerms[i]);
 			free(searchTerms);
+			readFromPipe(msgbuf);
 			writeToPipe("done");
 		}
 		else if(strcmp(msgbuf,"/wc") == 0){
@@ -129,6 +142,10 @@ void sigDone(int signum){
 	done = 1;
 }
 
+void sigDeadline(int signum){
+	deadline = 1;
+}
+
 void setupSigActions(){
 	struct sigaction sigusr1;
 	sigusr1.sa_handler = sigCheckPipe;
@@ -141,6 +158,12 @@ void setupSigActions(){
 	sigemptyset (&sigusr2.sa_mask);
 	sigusr2.sa_flags = 0;
 	sigaction(SIGUSR2,&sigusr2,NULL);
+
+	struct sigaction sigchld;
+	sigchld.sa_handler = sigDeadline;
+	sigemptyset (&sigchld.sa_mask);
+	sigchld.sa_flags = 0;
+	sigaction(SIGCHLD,&sigchld,NULL);
 }
 
 void searchForWord(char * searchTerm){

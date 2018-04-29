@@ -14,17 +14,18 @@ int totalLines;
 int totalWords;
 int totalLetters;
 
-int * responses;
-
-
+int responses;
+int searching;
+int deadline;
 
 int main(int argc, char *argv[]){
 	setupSigActions();
-	unlink("log/*");
 
 	totalLines = 0;
 	totalWords = 0;
 	totalLetters = 0;
+
+	searching = 0;
 
 	//Read and check arguments for validity
 	char * docfile;
@@ -115,7 +116,6 @@ int main(int argc, char *argv[]){
 	freePipeNames(w,outPipes,inPipes);
 	free(in);
 	free(out);
-	free(responses);
 	free(docfile);
 
 	for(int i=0; i<numberOfDirectories; i++){

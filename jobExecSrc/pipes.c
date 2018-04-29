@@ -6,7 +6,7 @@ extern int * out;
 extern int * in;
 extern char ** outPipes;					//Output named pipes
 extern char ** inPipes;					//Input named pipes
-extern int * responses;
+extern int responses;
 
 int openForReading(char * name){
 	return open(name, O_RDONLY);
@@ -48,8 +48,6 @@ void createNamedPipe(char * pipeName){
 }
 
 void allocateSpace(){
-	responses = malloc(w*sizeof(int));
-	for(int i=0; i<w; i++) responses[i] = 0;
 
 	out = malloc(w*sizeof(int));		//Output named pipe file descriptors
 	in = malloc(w*sizeof(int));			//Input named pipe file descriptors
@@ -77,9 +75,15 @@ int openAndTestPipes(){
 
 void nonBlockingInputPipes(){
 	for(int i=0; i<w; i++){
-		//Reopen the input pipes with non blocking argument
 		close(in[i]);
 		in[i] = open(inPipes[i], O_RDONLY | O_NONBLOCK);
+	}
+}
+
+void blockingInputPipes(){
+	for(int i=0; i<w; i++){
+		close(in[i]);
+		in[i] = open(inPipes[i], O_RDONLY);
 	}
 }
 

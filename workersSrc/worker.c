@@ -18,6 +18,7 @@ int done;
 
 SearchInfo * searchResults;
 int resultsCount;
+int deadline;
 
 FILE * myLog;
 
@@ -38,6 +39,8 @@ int main(int argc, char *argv[]){
 	totalLines = 0;
 	totalWords = 0;
 	totalLetters = 0;
+
+	deadline = 0;
 
 	char * logFileName = malloc(strlen(id)+16);
 	sprintf(logFileName,"log/Worker_%s.log",id);

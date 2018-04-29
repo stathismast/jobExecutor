@@ -1,10 +1,15 @@
 #include "commands.h"
 
+extern struct workerInfo * workers;
+
 extern int totalLines;
 extern int totalWords;
 extern int totalLetters;
 
 extern int w;
+extern int responses;
+extern int searching;
+extern int deadline;
 
 //Get a line for 'stdin' and return the string containing that line
 char * getCommand(){
@@ -88,6 +93,19 @@ void search(){
 	for(int i=0; i<w; i++)
 		for(int j=0; j<termCount; j++)
 			writeToPipe(i,searchTerms[j]);
+
+	deadline = time(NULL) + 2;
+	responses = 0;
+	searching = 1;
+	while(responses != w && deadline > time(NULL))
+		sleep(deadline - time(NULL));
+	searching = 0;
+
+	for(int i=0; i<w; i++)
+		kill(workers[i].pid,SIGCHLD);
+
+	for(int i=0; i<w; i++)
+		writeToPipe(i,"deadline");
 	for(int i=0; i<w; i++)
 		readFromPipe(i,msgbuf);
 	for(int i=0; i<termCount; i++)
