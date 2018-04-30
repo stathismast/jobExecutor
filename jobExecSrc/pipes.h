@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define MSGSIZE 4095
+#define MSGSIZE 511
 
 typedef struct workerInfo{
     pid_t pid;              //PID of worker

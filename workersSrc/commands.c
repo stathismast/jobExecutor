@@ -79,7 +79,7 @@ void search(){
 void searchForWord(char * searchTerm){
     char msgbuf[MSGSIZE+1] = {0};
     sprintf(msgbuf,"%d:search:%s",(int)time(NULL),searchTerm);
-    for(int i=0; i<dirCount; i++){
+    for(int i=0; i<dirCount; i++)
         for(int j=0; j<directories[i].fileCount; j++){
             PostingListHead * pl = getPostingList(searchTerm,directories[i].files[j].trie);
             if(pl != NULL){
@@ -94,7 +94,6 @@ void searchForWord(char * searchTerm){
                 }
             }
         }
-    }
     fprintf(myLog,"%s\n",msgbuf);
 }
 
@@ -106,16 +105,12 @@ void sendSearchResults(){
     while(node != NULL){
         temp = searchInfoToString(node);
         while((int)strlen(temp) > MSGSIZE + pos){
-            printf("%d > %d + %d\n",(int)strlen(temp),MSGSIZE,pos);
             strncpy(msgbuf,&temp[pos],MSGSIZE);
             msgbuf[MSGSIZE] = 0; //Null character at the end of the string
-            printf("Sending %s\n",msgbuf);
             writeToPipe(msgbuf);
             pos += MSGSIZE;
         }
-        printf("%d < %d + %d\n",(int)strlen(temp),MSGSIZE,pos);
         strncpy(msgbuf,&temp[pos],strlen(temp)+1);
-        printf("Sending %s\n",msgbuf);
         free(temp);
         writeToPipe(msgbuf);
         node = node->next;
