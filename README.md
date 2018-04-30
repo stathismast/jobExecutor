@@ -68,6 +68,10 @@ A new worker will be created and will be assigned the directories that
 originally belonged to the terminated process. After that, the jobExecutor and
 the new worker will go through the initilization process as described above.
 
+WORKER RETURN VALUE
+As requested the workers return to the jobExector the number of different terms
+they found in their files while running a /search command.
+
 SCRIPTS
 For the most/least frequently found scripts, if there are more than one
 most/least found words, only one of them will be printed. All else is as
