@@ -12,7 +12,6 @@ extern int totalWords;
 extern int totalLetters;
 
 extern SearchInfo * searchResults;
-extern int resultsCount;
 extern int deadline;
 
 extern int commandID;
@@ -23,8 +22,8 @@ extern FILE * myLog;
 
 char msgbuf[MSGSIZE+1] = {0};
 
+//Check out input pipe and act accordingly depending on the input
 void sigCheckPipe(int signum){
-
     readFromPipe(msgbuf);
 
     //If this is part of a test respond with the same message
@@ -54,7 +53,7 @@ void sigCheckPipe(int signum){
         }
         writeToPipe(msgbuf);
     }
-    //Stage 3 is where the worker send its /wc statistics to the jobExecutor
+    //Stage 3 is where the worker sends its /wc statistics to the jobExecutor
     else if(stage == 3){
         if(strcmp(msgbuf,"/wc") == 0){
             char response[MSGSIZE+1] = {0};
@@ -86,11 +85,12 @@ void sigCheckPipe(int signum){
     }
 }
 
+//Invoked by the jobExecutor whenever we are out of time
 void sigDeadline(int signum){
-    printf("sigDeadline for %s\n",id);
     deadline = 1;
 }
 
+//Set up signal handler for checking the input pipe and deadline
 void setupSigActions(){
     struct sigaction sigusr1;
     sigusr1.sa_handler = sigCheckPipe;

@@ -8,3 +8,4 @@ void minCount(char * keyword);
 void search();
 void getWordCount();
 void printSearchResults(int worker);
+void initializePollFds();

@@ -15,6 +15,8 @@ extern int responses;
 extern int searching;
 extern int deadline;
 
+struct pollfd * fds;
+
 //Get a line for 'stdin' and return the string containing that line
 char * getCommand(){
     char * command = NULL;
@@ -92,16 +94,12 @@ void maxCount(char * keyword){
                        //No need to signal because the worker is expecting it
     }
 
-    struct pollfd * fds = malloc(w*sizeof(struct pollfd));
     //Init pollfd array
-    for(int i=0; i<w; i++){
-        fds[i].fd = in[i];
-        fds[i].events = POLLIN;
-        fds[i].revents = 0;
-    }
+    fds = malloc(w*sizeof(struct pollfd));
+    initializePollFds();
 
-    //Store the max count from every worker
-    int responses = 0;
+    //Use poll() to receive the max count from every worker
+    responses = 0;
     while(responses < w){
         responses += poll(fds,w,100000);
         if(responses > 0)
@@ -113,14 +111,10 @@ void maxCount(char * keyword){
                 }
     }
 
-    //Init pollfd array
-    for(int i=0; i<w; i++){
-        fds[i].fd = in[i];
-        fds[i].events = POLLIN;
-        fds[i].revents = 0;
-    }
+    //Init pollfd array for next wave of messages
+    initializePollFds();
 
-    //Store the file that has the max count from every worker
+    //Use poll() to receive the file that has the max count from every worker
     responses = 0;
     while(responses < w){
         responses += poll(fds,w,100000);
@@ -145,6 +139,8 @@ void maxCount(char * keyword){
     if(counts[max] == 0)
         printf("'%s' does not exist in the given dataset\n", keyword);
     else printf("'%s' appears %d times in '%s'\n", keyword, counts[max], fileNames[max]);
+
+    //Deallocate space
     free(counts);
     for(int i=0; i<w; i++){
         free(fileNames[i]);
@@ -164,15 +160,11 @@ void minCount(char * keyword){
                        //No need to signal because the worker is expecting it
     }
 
-    struct pollfd * fds = malloc(w*sizeof(struct pollfd));
     //Init pollfd array
-    for(int i=0; i<w; i++){
-        fds[i].fd = in[i];
-        fds[i].events = POLLIN;
-        fds[i].revents = 0;
-    }
+    fds = malloc(w*sizeof(struct pollfd));
+    initializePollFds();
 
-    //Store the min count from every worker
+    //Use poll() to receive the min count from every worker
     int responses = 0;
     while(responses < w){
         responses += poll(fds,w,100000);
@@ -185,14 +177,10 @@ void minCount(char * keyword){
                 }
     }
 
-    //Init pollfd array
-    for(int i=0; i<w; i++){
-        fds[i].fd = in[i];
-        fds[i].events = POLLIN;
-        fds[i].revents = 0;
-    }
+    //Init pollfd array for next wave of messages
+    initializePollFds();
 
-    //Store the file that has the min count from every worker
+    //Use poll() to receive the file that has the min count from every worker
     responses = 0;
     while(responses < w){
         responses += poll(fds,w,100000);
@@ -246,7 +234,7 @@ void search(){
             termCount++;
         } else break;
 
-    //Store the given deadline
+    //Check that search command is valid and store the deadline argument
     int pos = 0;
     while(pos<termCount){
         if(strcmp(searchTerms[pos],"-d") == 0) break;
@@ -265,55 +253,61 @@ void search(){
             free(searchTerms[i]);
         return;
     }
+    termCount -= 2; //Reduce value of termCount because two of those
+                    //terms were '-d' and the deadline value that was given
 
     //Inform workers that we are about to run a search command
     for(int i=0; i<w; i++)
         writeToChild(i,"/search");
 
     //Send the total number of search terms to the workers
-    sprintf(msgbuf,"%d",termCount-2);   //String with the number of search terms
+    sprintf(msgbuf,"%d",termCount);  //String with the number of search terms
     for(int i=0; i<w; i++)
         writeToPipe(i,msgbuf);
 
     //Send every search term to each worker
     for(int i=0; i<w; i++)
-        for(int j=0; j<termCount-2; j++)
+        for(int j=0; j<termCount; j++)
             writeToPipe(i,searchTerms[j]);
 
-    struct pollfd * fds = malloc(w*sizeof(struct pollfd));
     //Init pollfd array
-    for(int i=0; i<w; i++){
-        fds[i].fd = in[i];
-        fds[i].events = POLLIN;
-        fds[i].revents = 0;
-    }
+    fds = malloc(w*sizeof(struct pollfd));
+    initializePollFds();
 
-    //Store the max count from every worker
     responses = 0;
+    //Set deadline value to the current time plus the given deadline argument
     deadline = time(NULL) + dl;
+
+    //While there are workers that are still searching and we haven't
+    //yet hit the deadline
     while(responses < w && deadline > time(NULL)){
+        //Poll the input pipes until a worker responds
+        //or until the deadline
         responses += poll(fds,w,(deadline - time(NULL)) * 1000);
         if(responses > 0)
+            //For every response
             for(int i=0; i<w; i++)
+                //Read the response and inform the worker that
+                //it is within the given dead
                 if(fds[i].revents & POLLIN){
                     readFromPipe(i,msgbuf);
                     strcpy(msgbuf,"yes");
                     writeToPipe(i,msgbuf);
+                    //Receive and print the search results given by the worker
                     printSearchResults(i);
                     fds[i].fd = 0;
                 }
     }
 
     // If a worker is still searching, this signal informs them to stop
-    for(int i=0; i<w; i++){
-        if(fds[i].fd != 0){
-            int retval = kill(workers[i].pid,SIGUSR2);
-        }
-    }
+    for(int i=0; i<w; i++)
+        if(fds[i].fd != 0)
+            kill(workers[i].pid,SIGUSR2);
 
     printf("%d out of %d workers responded.\n", responses, w);
 
-    //After deadline
+    //Right after deadline inform the workers (which were not able
+    //to finish in time) that they shouldn't send their results
     while(responses < w){
         responses += poll(fds,w,(deadline - time(NULL)) * 1000);
         if(responses > 0)
@@ -326,11 +320,14 @@ void search(){
                 }
     }
 
-    for(int i=0; i<termCount; i++)
+    //Deallocate used space
+    for(int i=0; i<termCount+2; i++)
         free(searchTerms[i]);
     free(fds);
 }
 
+//Receiver the /wc statistics from each worker
+//This is only done once at the start of the program
 void getWordCount(){
     char msgbuf[MSGSIZE+1];
     for(int i=0; i<w; i++){
@@ -342,11 +339,21 @@ void getWordCount(){
     }
 }
 
+//Receive the search results of a worker and print them out
 void printSearchResults(int worker){
     char msgbuf[MSGSIZE+1];
     readFromPipe(worker,msgbuf);
     while(strcmp(msgbuf,"noMoreResults") != 0){
         printf("%s",msgbuf);
         readFromPipe(worker,msgbuf);
+    }
+}
+
+//Initialize pollfd array
+void initializePollFds(){
+    for(int i=0; i<w; i++){
+        fds[i].fd = in[i];
+        fds[i].events = POLLIN;
+        fds[i].revents = 0;
     }
 }

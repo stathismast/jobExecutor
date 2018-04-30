@@ -19,7 +19,6 @@ int done;                   //Integer ised as a boolean, has true value when
                             //the worker has to terminate
 
 SearchInfo * searchResults; //List of search results
-int resultsCount;           //Number of search results
 int deadline;               //Integer used as a boolean
 
 int commandID;              //Integer indicating which command we need to run
@@ -40,6 +39,8 @@ int main(int argc, char *argv[]){
     setupSigActions();
 
     manageArguments(argc,argv);
+
+    //Open input and output pipes
     openPipes();
 
     //Initialize global variable values

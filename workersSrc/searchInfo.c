@@ -41,20 +41,19 @@ void printSearchResults(SearchInfo * list){
     printSearchResults(list->next);
 }
 
-int getListLength(SearchInfo * list){
-    if(list == NULL) return 0;
-    return 1 + getListLength(list->next);
-}
-
+//Convert a given SearchInfo node to a string
 char * searchInfoToString(SearchInfo * list){
+    //First we calculate the length of the string
     int length = getNumberOfDigits(list->line);
     length += strlen(list->file->fileName);
     length += strlen(list->file->lines[list->line]) + 20;
+    //Allocate space for the string
     char * string = malloc(length);
     sprintf(string, "line %d in file '%s': %s\n", list->line, list->file->fileName, list->file->lines[list->line]);
     return string;
 }
 
+//Returns the number of digits of a given integer
 int getNumberOfDigits(int i){
 	if(i==0) return 1;
 	int offset = 1;
