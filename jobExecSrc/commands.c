@@ -345,10 +345,8 @@ void getWordCount(){
 void printSearchResults(int worker){
     char msgbuf[MSGSIZE+1];
     readFromPipe(worker,msgbuf);
-    int count = 0;
     while(strcmp(msgbuf,"noMoreResults") != 0){
         printf("%s",msgbuf);
-        count++;
         readFromPipe(worker,msgbuf);
     }
 }

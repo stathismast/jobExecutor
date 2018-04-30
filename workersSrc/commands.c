@@ -102,14 +102,23 @@ void sendSearchResults(){
     char msgbuf[MSGSIZE+1] = {0};
     char * temp;
     SearchInfo * node = searchResults;
-    int count = 0;
+    int pos = 0;
     while(node != NULL){
         temp = searchInfoToString(node);
-        strcpy(msgbuf,temp);
+        while((int)strlen(temp) > MSGSIZE + pos){
+            printf("%d > %d + %d\n",(int)strlen(temp),MSGSIZE,pos);
+            strncpy(msgbuf,&temp[pos],MSGSIZE);
+            msgbuf[MSGSIZE] = 0; //Null character at the end of the string
+            printf("Sending %s\n",msgbuf);
+            writeToPipe(msgbuf);
+            pos += MSGSIZE;
+        }
+        printf("%d < %d + %d\n",(int)strlen(temp),MSGSIZE,pos);
+        strncpy(msgbuf,&temp[pos],strlen(temp)+1);
+        printf("Sending %s\n",msgbuf);
         free(temp);
         writeToPipe(msgbuf);
         node = node->next;
-        count++;
     }
     strcpy(msgbuf,"noMoreResults");
     writeToPipe(msgbuf);

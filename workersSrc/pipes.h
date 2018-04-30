@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define MSGSIZE 512
+#define MSGSIZE 4095
 
 void openPipes();
 void readFromPipe(char * msgbuf);

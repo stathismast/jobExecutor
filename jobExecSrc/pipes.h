@@ -7,13 +7,13 @@
 #include <unistd.h>
 #include <time.h>
 
+#define MSGSIZE 4095
+
 typedef struct workerInfo{
     pid_t pid;              //PID of worker
     int dirCount;           //Number of directories for this worker
     char ** directories;    //Names of directories of this worker
 } workerInfo;
-
-#define MSGSIZE 512
 
 int openForReading(char * name);
 int openForWriting(char * name);
