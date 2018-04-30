@@ -15,3 +15,6 @@ SearchInfo * newSearchInfo(int line, fileInfo * file);
 void freeSearchInfo(SearchInfo * list);
 int addSearchResult(int line, fileInfo * file, SearchInfo ** list);
 void printSearchResults(SearchInfo * list);
+int getListLength(SearchInfo * list);
+char * searchInfoToString(SearchInfo * list);
+int getNumberOfDigits(int i);

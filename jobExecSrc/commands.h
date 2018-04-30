@@ -7,3 +7,4 @@ void maxCount(char * keyword);
 void minCount(char * keyword);
 void search();
 void getWordCount();
+void printSearchResults(int worker);

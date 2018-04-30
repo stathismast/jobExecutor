@@ -1,5 +1,7 @@
 #include "searchInfo.h"
 
+extern
+
 //Create and return a new SearchInfo
 SearchInfo * newSearchInfo(int line, fileInfo * file){
     SearchInfo * node = malloc(sizeof(SearchInfo));
@@ -37,4 +39,29 @@ void printSearchResults(SearchInfo * list){
 
     printf("line %d in file '%s': %s\n", list->line, list->file->fileName, list->file->lines[list->line]);
     printSearchResults(list->next);
+}
+
+int getListLength(SearchInfo * list){
+    if(list == NULL) return 0;
+    return 1 + getListLength(list->next);
+}
+
+char * searchInfoToString(SearchInfo * list){
+    int length = getNumberOfDigits(list->line);
+    length += strlen(list->file->fileName);
+    length += strlen(list->file->lines[list->line]) + 20;
+    char * string = malloc(length);
+    sprintf(string, "line %d in file '%s': %s\n", list->line, list->file->fileName, list->file->lines[list->line]);
+    return string;
+}
+
+int getNumberOfDigits(int i){
+	if(i==0) return 1;
+	int offset = 1;
+	int p = 10;
+	while(i%p != i){
+		offset++;
+		p *= 10;
+	}
+	return offset;
 }

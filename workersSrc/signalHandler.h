@@ -7,4 +7,3 @@ void setupSigActions();
 
 int countFiles(char * directory);
 void getFiles(struct dirInfo * directory);
-void searchForWord(char * searchTerm);

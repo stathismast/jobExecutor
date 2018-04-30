@@ -104,24 +104,3 @@ void setupSigActions(){
     sigusr2.sa_flags = 0;
     sigaction(SIGUSR2,&sigusr2,NULL);
 }
-
-void searchForWord(char * searchTerm){
-    sprintf(msgbuf,"%d:search:%s",(int)time(NULL),searchTerm);
-    for(int i=0; i<dirCount; i++){
-        for(int j=0; j<directories[i].fileCount; j++){
-            PostingListHead * pl = getPostingList(searchTerm,directories[i].files[j].trie);
-            if(pl != NULL){
-                PostingListNode * plNode = pl->next;
-                while(plNode != NULL){
-                    resultsCount += addSearchResult(plNode->id,&directories[i].files[j],&searchResults);
-                    if(strstr(msgbuf, directories[i].files[j].fileName) == NULL){
-                        strcat(msgbuf,":");
-                        strcat(msgbuf,directories[i].files[j].fileName);
-                    }
-                    plNode = plNode->next;
-                }
-            }
-        }
-    }
-    fprintf(myLog,"%s\n",msgbuf);
-}
