@@ -5,6 +5,7 @@ extern char * id;
 extern int dirCount;
 extern dirInfo * directories;
 
+extern SearchTermList * stList;
 extern SearchInfo * searchResults;
 extern int deadline;
 
@@ -135,7 +136,9 @@ void searchForWord(char * searchTerm){
                 //If the keyword is included in the trie, for each line its in
                 //add another node to our searchResult list
                 while(plNode != NULL){
+                    addSearchTermList(searchTerm,&stList);
                     addSearchResult(plNode->id,&directories[i].files[j],&searchResults);
+                    //Add information to the logging string
                     if(strstr(msgbuf, directories[i].files[j].fileName) == NULL){
                         strcat(msgbuf,":");
                         strcat(msgbuf,directories[i].files[j].fileName);

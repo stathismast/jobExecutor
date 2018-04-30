@@ -18,6 +18,7 @@ int stage;                  //Stage indicator, used to differentiate the stages
 int done;                   //Integer ised as a boolean, has true value when
                             //the worker has to terminate
 
+SearchTermList * stList;    //List for every unique search term found
 SearchInfo * searchResults; //List of search results
 int deadline;               //Integer used as a boolean
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[]){
     done = 0;
     stage = 1;
     commandID = 0;
+    stList = NULL;
 
     //Create and open a log file
     char * logFileName = malloc(strlen(id)+16);
@@ -87,4 +89,8 @@ int main(int argc, char *argv[]){
     }
     free(directories);
 
+    //Return the number of unique terms found
+    int uniqueTerms = getSearchTermListLength(stList);
+    freeSearchTermList(stList);
+    return uniqueTerms;
 }

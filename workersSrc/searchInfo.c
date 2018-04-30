@@ -1,6 +1,5 @@
 #include "searchInfo.h"
 
-extern
 
 //Create and return a new SearchInfo
 SearchInfo * newSearchInfo(int line, fileInfo * file){
@@ -63,4 +62,38 @@ int getNumberOfDigits(int i){
 		p *= 10;
 	}
 	return offset;
+}
+
+
+SearchTermList * newSearchTermList(char * term){
+    SearchTermList * node = malloc(sizeof(SearchTermList));
+    node->term = malloc(strlen(term)+1);
+    strcpy(node->term,term);
+    node->next = NULL;
+    return node;
+}
+
+void freeSearchTermList(SearchTermList * list){
+    if(list == NULL) return;
+    freeSearchTermList(list->next);
+    free(list->term);
+    free(list);
+}
+
+//Add a new term only if it is unique to the others
+void addSearchTermList(char * term, SearchTermList ** list){
+    if(*list == NULL){
+        (*list) = newSearchTermList(term);
+        return;
+    }
+
+    if(strcmp(term,(*list)->term) == 0)
+        return;
+
+    return addSearchTermList(term,&(*list)->next);
+}
+
+int getSearchTermListLength(SearchTermList * list){
+    if(list == NULL) return 0;
+    return 1 + getSearchTermListLength(list->next);
 }

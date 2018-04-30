@@ -1,6 +1,5 @@
 #include "commands.h"
 
-pid_t * childPIDs;              //Array with the PIDs of each worker
 int w;                          //Number of workers
 int * out;                      //Array with file descriptors of output pipes
 int * in;                       //Array with file descriptors of input pipes
@@ -78,6 +77,15 @@ int main(int argc, char *argv[]){
 
     //Inform each worker to exit
     terminateWorkers();
+
+    //Get the workers return value
+    int status;
+    for(int i=0; i<w; i++){
+        waitpid(workers[i].pid,&status,0);
+        if (WIFEXITED(status)) {
+            printf("Worker #%d found %d uniques terms.\n", i, (int)WEXITSTATUS(status));
+        }
+    }
 
     //Delete pipes
     for(int i=0; i<w; i++)
