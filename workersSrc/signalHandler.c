@@ -80,14 +80,14 @@ void sigCheckPipe(int signum){
         else if(strcmp(msgbuf,"/wc") == 0){
             fprintf(myLog,"%d:wc:%d:%d:%d\n",(int)time(NULL),totalLines,totalWords,totalLetters);
         }
+        else if(strcmp(msgbuf,"/exit") == 0){
+            done = 1;
+        }
     }
 }
 
-void sigDone(int signum){
-    done = 1;
-}
-
 void sigDeadline(int signum){
+    printf("sigDeadline for %s\n",id);
     deadline = 1;
 }
 
@@ -99,16 +99,10 @@ void setupSigActions(){
     sigaction(SIGUSR1,&sigusr1,NULL);
 
     struct sigaction sigusr2;
-    sigusr2.sa_handler = sigDone;
+    sigusr2.sa_handler = sigDeadline;
     sigemptyset (&sigusr2.sa_mask);
     sigusr2.sa_flags = 0;
     sigaction(SIGUSR2,&sigusr2,NULL);
-
-    struct sigaction sigchld;
-    sigchld.sa_handler = sigDeadline;
-    sigemptyset (&sigchld.sa_mask);
-    sigchld.sa_flags = 0;
-    sigaction(SIGCHLD,&sigchld,NULL);
 }
 
 void searchForWord(char * searchTerm){

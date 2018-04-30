@@ -9,6 +9,8 @@ extern int deadline;
 
 //Handler for when a child is terminated
 void sigChild(int signum){
+    int status;
+    wait(&status);
     for(int i=0; i<w; i++){
         if(kill(workers[i].pid,0) != 0){
             printf("\n#%d worker terminated.\n",i);

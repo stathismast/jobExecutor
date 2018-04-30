@@ -5,6 +5,8 @@ extern struct workerInfo * workers;
 extern int numberOfDirectories;
 extern char ** allDirectories;
 
+char msgbuf[MSGSIZE+1];
+
 //Removes a new line character at the end of the string (if it exists)
 void removeNewLine(char ** str){
     for(int i=0; i<strlen(*str); i++){
@@ -85,7 +87,6 @@ void distributeDirectories(){
 
 //Send directory info to workers
 void sendDirectories(){
-    char msgbuf[MSGSIZE+1];
     for(int i=0; i<w; i++){
         char num[16] = {0};            //String with the number of directories
         sprintf(num, "%d", workers[i].dirCount);
@@ -109,8 +110,10 @@ void sendDirectories(){
 //Signal each worker to deallocate memory and exit
 void terminateWorkers(){
     signal(SIGCHLD,SIG_DFL);    //Reset signal handler for SIGCHLD
-    for(int i=0; i<w; i++)
-        kill(workers[i].pid,SIGUSR2);
+    for(int i=0; i<w; i++){
+        strcpy(msgbuf,"/exit");
+        writeToChild(i,msgbuf);
+    }
 }
 
 //Manages arguments given on execution and checks for errors

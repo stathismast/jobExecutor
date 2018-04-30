@@ -1,0 +1,13 @@
+1525088336:search:this:dataset/smallDir5/text1.txt
+1525088336:search:is
+1525088336:search:kind
+1525088336:search:of:dataset/smallDir5/text1.txt:dataset/smallDir6/text1.txt:dataset/smallDir6/text2.txt
+1525088336:search:a:dataset/smallDir5/text1.txt:dataset/smallDir5/text2.txt:dataset/smallDir6/text1.txt:dataset/smallDir6/text2.txt
+1525088336:search:large:dataset/smallDir5/text2.txt
+1525088336:search:question:dataset/smallDir5/text2.txt
+1525088341:maxcount:all
+1525088344:mincount:all
+1525088348:maxcount:balls
+1525088351:mincount:sack
+1525088355:wc:31:265:1488
+1525088356:wc:31:265:1488

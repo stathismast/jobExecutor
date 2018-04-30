@@ -1,10 +1,14 @@
 #include "commands.h"
+#include <stropts.h>
+#include <poll.h>
 
 extern struct workerInfo * workers;
 
 extern int totalLines;
 extern int totalWords;
 extern int totalLetters;
+
+extern int * in;
 
 extern int w;
 extern int responses;
@@ -125,31 +129,72 @@ void search(){
         for(int j=0; j<termCount-2; j++)
             writeToPipe(i,searchTerms[j]);
 
-    //Calculate deadline
-    deadline = time(NULL) + dl;
+    struct pollfd * fds = malloc(w*sizeof(struct pollfd));
+    //Init pollfd array
+    for(int i=0; i<w; i++){
+        fds[i].fd = in[i];
+        fds[i].events = POLLIN;
+        fds[i].revents = 0;
+    }
+
+    //Store the max count from every worker
     responses = 0;
-    searching = 1;
-    //Sleep until EITHER:
-    //a. all the workers have responed with their results OR
-    //b. we have reached the deadline
-    while(responses != w && deadline > time(NULL))
-        sleep(deadline - time(NULL));
-    searching = 0;
+    deadline = time(NULL) + dl;
+    while(responses < w && deadline > time(NULL)){
+        responses += poll(fds,w,(deadline - time(NULL)) * 1000);
+        if(responses > 0)
+            for(int i=0; i<w; i++)
+                if(fds[i].revents & POLLIN){
+                    readFromPipe(i,msgbuf);
+                    strcpy(msgbuf,"yes");
+                    writeToPipe(i,msgbuf);
+                    fds[i].fd = 0;
+                }
+    }
 
-    //If a worker is still searching this signal informs them to stop
-    for(int i=0; i<w; i++)
-        kill(workers[i].pid,SIGCHLD);
+    // If a worker is still searching, this signal informs them to stop
+    for(int i=0; i<w; i++){
+        if(fds[i].fd != 0){
+            int retval = kill(workers[i].pid,SIGUSR2);
+        }
+    }
 
-    //Send a message to workers to confirm that they have stopped searching
-    for(int i=0; i<w; i++)
-        writeToPipe(i,"deadline");
-    //Confirmation from workers
-    for(int i=0; i<w; i++)
-        readFromPipe(i,msgbuf);
+    printf("%d out of %d workers responded.\n", responses, w);
+
+    //After deadline
+    while(responses < w){
+        responses += poll(fds,w,(deadline - time(NULL)) * 1000);
+        if(responses > 0)
+            for(int i=0; i<w; i++)
+                if(fds[i].revents & POLLIN){
+                    readFromPipe(i,msgbuf);
+                    strcpy(msgbuf,"no");
+                    writeToPipe(i,msgbuf);
+                    fds[i].fd = 0;
+                }
+    }
+
+
+    //Init pollfd array
+    for(int i=0; i<w; i++){
+        fds[i].fd = in[i];
+        fds[i].events = POLLIN;
+        fds[i].revents = 0;
+    }
+    responses = 0;
+    while(responses < w){
+        responses += poll(fds,w,1000000);
+        if(responses > 0)
+            for(int i=0; i<w; i++)
+                if(fds[i].revents & POLLIN){
+                    readFromPipe(i,msgbuf);
+                    fds[i].fd = 0;
+                }
+    }
 
     for(int i=0; i<termCount; i++)
         free(searchTerms[i]);
-    printf("%d out of %d workers responded.\n", responses, w);
+    free(fds);
 }
 
 //Function in charge of executing the /maxcount command
@@ -165,17 +210,46 @@ void maxCount(char * keyword){
                        //No need to signal because the worker is expecting it
     }
 
-    //Store the max count from every worker
+    struct pollfd * fds = malloc(w*sizeof(struct pollfd));
+    //Init pollfd array
     for(int i=0; i<w; i++){
-        readFromPipe(i,msgbuf);
-        counts[i] = atoi(msgbuf);
+        fds[i].fd = in[i];
+        fds[i].events = POLLIN;
+        fds[i].revents = 0;
+    }
+
+    //Store the max count from every worker
+    int responses = 0;
+    while(responses < w){
+        responses += poll(fds,w,100000);
+        if(responses > 0)
+            for(int i=0; i<w; i++)
+                if(fds[i].revents & POLLIN){
+                    readFromPipe(i,msgbuf);
+                    counts[i] = atoi(msgbuf);
+                    fds[i].fd = 0;
+                }
+    }
+
+    //Init pollfd array
+    for(int i=0; i<w; i++){
+        fds[i].fd = in[i];
+        fds[i].events = POLLIN;
+        fds[i].revents = 0;
     }
 
     //Store the file that has the max count from every worker
-    for(int i=0; i<w; i++){
-        readFromPipe(i,msgbuf);
-        fileNames[i] = malloc(strlen(msgbuf)+1);
-        strcpy(fileNames[i],msgbuf);
+    responses = 0;
+    while(responses < w){
+        responses += poll(fds,w,100000);
+        if(responses > 0)
+            for(int i=0; i<w; i++)
+                if(fds[i].revents & POLLIN){
+                    readFromPipe(i,msgbuf);
+                    fileNames[i] = malloc(strlen(msgbuf)+1);
+                    strcpy(fileNames[i],msgbuf);
+                    fds[i].fd = 0;
+                }
     }
 
     //Find the overall max count
@@ -194,6 +268,7 @@ void maxCount(char * keyword){
         free(fileNames[i]);
     }
     free(fileNames);
+    free(fds);
 }
 
 //Function in charge of executing the /mincount command
@@ -207,17 +282,48 @@ void minCount(char * keyword){
                        //No need to signal because the worker is expecting it
     }
 
+    struct pollfd * fds = malloc(w*sizeof(struct pollfd));
+    //Init pollfd array
+    for(int i=0; i<w; i++){
+        fds[i].fd = in[i];
+        fds[i].events = POLLIN;
+        fds[i].revents = 0;
+    }
+
     //Store the min count from every worker
-    for(int i=0; i<w; i++){
-        readFromPipe(i,msgbuf);
-        counts[i] = atoi(msgbuf);
+    int responses = 0;
+    while(responses < w){
+        responses += poll(fds,w,100000);
+        if(responses > 0)
+            for(int i=0; i<w; i++)
+                if(fds[i].revents & POLLIN){
+                    readFromPipe(i,msgbuf);
+                    counts[i] = atoi(msgbuf);
+                    fds[i].fd = 0;
+                }
     }
+
+    //Init pollfd array
+    for(int i=0; i<w; i++){
+        fds[i].fd = in[i];
+        fds[i].events = POLLIN;
+        fds[i].revents = 0;
+    }
+
     //Store the file that has the min count from every worker
-    for(int i=0; i<w; i++){
-        readFromPipe(i,msgbuf);
-        fileNames[i] = malloc(strlen(msgbuf)+1);
-        strcpy(fileNames[i],msgbuf);
+    responses = 0;
+    while(responses < w){
+        responses += poll(fds,w,100000);
+        if(responses > 0)
+            for(int i=0; i<w; i++)
+                if(fds[i].revents & POLLIN){
+                    readFromPipe(i,msgbuf);
+                    fileNames[i] = malloc(strlen(msgbuf)+1);
+                    strcpy(fileNames[i],msgbuf);
+                    fds[i].fd = 0;
+                }
     }
+
     //Find the overall min count
     int min = 0;
     int found = 0;
@@ -239,6 +345,7 @@ void minCount(char * keyword){
         free(fileNames[i]);
     }
     free(fileNames);
+    free(fds);
 }
 
 void getWordCount(){

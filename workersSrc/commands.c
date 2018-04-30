@@ -61,19 +61,14 @@ void search(){
     resultsCount = 0;
     for(int i=0; i<termCount; i++)
         if(!deadline) searchForWord(searchTerms[i]);
-        else break;
-    if(!deadline){
-        writeToPipe("deadline");
-        kill(getppid(),SIGUSR1);    //Inform the parent that we responded
-        readFromPipe(msgbuf);
-        if(strcmp(msgbuf,"yes") == 0)
-            printSearchResults(searchResults);
-    }
-    if(!deadline) pause();
+        
+    writeToPipe("deadline");    //Ask if we are within the deadline
+    readFromPipe(msgbuf);       //Read response
+    if(strcmp(msgbuf,"yes") == 0)
+        printSearchResults(searchResults);
     freeSearchInfo(searchResults);
     for(int i=0; i<termCount; i++)
         free(searchTerms[i]);
     free(searchTerms);
-    readFromPipe(msgbuf);
     writeToPipe("done");
 }
